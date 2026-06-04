@@ -25,19 +25,15 @@
 
 登录 Cloudflare → 左侧 **Workers & Pages** → 右上角 **Create application** → **Pages** → **Connect to Git**。
 
-📸 **图示**（对应步骤页面）：
+![Cloudflare Workers & Pages 首页](./images/01-cloudflare-workers-pages-home.png)
 
-页面标题是 `Create application`，中间有 2 个大卡片。**选上半部分（Pages 那条线）**，点 `Connect with GitHub` → 选 `imgdeng/jiucaiquan` 仓库。
+![Create application 页面，选 Pages 不要选 Worker](./images/02-create-application.png)
 
 ⚠️ **不要选**下半部分的 "Deploy Worker"（`npx wrangler deploy`），那是给后端代码用的，韭菜圈是静态站，用 Pages 才对。如果你之前已经建了一个 Worker 项目，去 Workers & Pages 列表里把它 **Delete** 掉，然后按上面的步骤重建。
 
 ### 2.2 选仓库 & 授权
 
-页面标题类似 `Install & authorize` 或 `Select a repository`：
-
-- Repository owner：选 `imgdeng`
-- Select repositories：选 `Only select repositories` → 勾上 `jiucaiquan` → 点 `Install`
-- 下一步选 Production branch = `main`
+授权 `imgdeng/jiucaiquan` 仓库给 Cloudflare Pages，然后 Production branch 选 `main`。
 
 ### 2.3 Build 设置（关键！这里最容易错）
 
@@ -52,18 +48,9 @@
 | **Build output directory** | **`apps/web/dist`** ⚠️ 这一项是关键——默认值 `dist` 会部署失败，因为我们是 monorepo 结构，产物在子目录里 |
 | Environment variables | 留空 |
 
-📸 **图示**（最终成功后的 Settings 截图）：
+![Build 设置页](./images/03-build-settings.png)
 
-在 Pages → `jiucaiquan` → **Settings** → Builds & deployments 里会看到：
-
-```
-Build command:      npm run build
-Build output:       apps/web/dist
-Root directory:     /
-Build comments:     Enabled
-Production branch:  main
-Automatic deployments: Enabled
-```
+![Pages Settings 最终配置](./images/04-pages-settings-final.png)
 
 **如果这里 Build output 只写了 `dist`，部署会失败**——必须改成 `apps/web/dist`。
 
@@ -79,31 +66,33 @@ Automatic deployments: Enabled
 
 **第 1 步：把 `jiucaiquan.com` 加到 Cloudflare 做域名管理**
 
-Cloudflare 首页 → **Add Site** / **Add website** → 输入 `jiucaiquan.com` → 选 **Free 套餐**（$0/month）→ 扫描 DNS 记录时直接 Continue（空的没关系）→ 最后页面会给你 2 个 Cloudflare nameserver，**记下来**，例如：
+Cloudflare 首页 → **Add Site** / **Add website** → 输入 `jiucaiquan.com` → 选 **Free 套餐**（$0/month）→ 扫描 DNS 记录时直接 Continue → 最后页面给你 2 个 Cloudflare nameserver。
 
-```
-camilo.ns.cloudflare.com
-fay.ns.cloudflare.com
-```
+![Add Site 选 Free 套餐](./images/05-add-site-free-plan.png)
+
+![Cloudflare 分配的 nameserver](./images/06-cloudflare-nameserver.png)
 
 **第 2 步：去阿里云改 DNS**
 
-- 登录阿里云 → 控制台 → **域名**
-- 找到 `jiucaiquan.com` → **DNS 修改**（左侧菜单里通常叫 "DNS修改" / "DNS服务器"）
-- 把原有的阿里云 DNS（`dns11.hichina.com` / `dns12.hichina.com`）**删掉**
-- 填入 Cloudflare 给的 2 个 nameserver
-- 点"确定" / 保存
+![阿里云 DNS 修改页面](./images/07-aliyun-dns-modify.png)
 
-> 说明：国内域名 DNS 修改后一般需要 10 分钟 ~ 几小时全球生效。Cloudflare 页面可能显示 "Pending"，耐心等一下。
+- 阿里云 → 控制台 → **域名** → `jiucaiquan.com` → **DNS 修改**
+- 把原来的 `dns11.hichina.com` / `dns12.hichina.com` 替换成 Cloudflare 给你的 2 个 nameserver（一行一个，第二个用"+ 添加DNS"按钮加）
+- 点蓝色 **"确定"** 按钮
+- 等待 10-60 分钟全球生效
 
 **第 3 步：在 Pages 项目里绑自定义域名**
 
-Workers & Pages → `jiucaiquan` 项目 → 顶部 **Custom domains** 标签 → **Set up a custom domain**：
+![Pages → Custom domains → Set up](./images/08-pages-custom-domain-setup.png)
 
-1. 先输入 `jiucaiquan.com` → 提交 → Cloudflare 会自动创建 DNS 记录 → 状态变 **Active** + **SSL enabled**
+Workers & Pages → `jiucaiquan` → **Custom domains** → **Set up a custom domain**：
+
+1. 先输入 `jiucaiquan.com` → 提交 → 点 **Activate domain** → 状态变 **Active** + **SSL enabled**
 2. 再输入 `www.jiucaiquan.com` → 同样操作
 
-> 提示：如果 Custom domains 页面提示 "先完成 DNS 迁移"，但你其实已经在阿里云改好了，可以直接在该页面输入域名提交，Cloudflare 会识别。如果一直卡 "Pending"，去 Cloudflare → Domains → `jiucaiquan.com` → Overview，看 status 是否变 Active。
+![Custom domains 最终状态](./images/09-custom-domains-active.png)
+
+> 提示：如果 Custom domains 页面提示 "先完成 DNS 迁移"，但你已经在阿里云改好了，等待一会儿 Cloudflare 会自动检测到，然后就可以直接输入域名提交。
 
 ---
 
@@ -115,7 +104,11 @@ Workers & Pages → `jiucaiquan` 项目 → 顶部 **Custom domains** 标签 →
 - `https://www.jiucaiquan.com`
 - `https://jiucaiquan.pages.dev`（临时域名保留方便排查问题）
 
-都能正常打开首页、计算器页面、策略说明页面，就是 OK。
+![韭菜圈首页最终效果](./images/10-jiucaiquan-homepage.png)
+
+![计算器页最终效果](./images/11-jiucaiquan-calculator.png)
+
+都能正常打开首页、计算器页、策略说明页，就算部署 OK。
 
 ---
 
