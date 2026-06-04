@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -15,10 +16,9 @@ from market_data.fetchers import (
 )
 from market_data.schema import QuoteSnapshot, now_china_iso
 
-
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT_DIR = ROOT / "apps" / "web" / "public" / "data"
-DEFAULT_FLASKDEMO_DIR = Path("/Users/gdeng/src/github/flaskdemo")
+DEFAULT_SOURCE_DIR = Path(os.environ.get("JCQ_SOURCE_DIR") or str(ROOT))
 
 
 def write_json_atomic(path: Path, payload: object) -> None:
@@ -124,7 +124,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build market data files for jiucaiquan web.")
     parser.add_argument("command", choices=["fetch-stock", "fetch-etf", "build-market-data"])
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
-    parser.add_argument("--source-dir", default=str(DEFAULT_FLASKDEMO_DIR))
+    parser.add_argument("--source-dir", default=str(DEFAULT_SOURCE_DIR))
     parser.add_argument("--no-live", action="store_true", help="Skip AkShare live fetch and use latest local CSV fallback.")
     return parser.parse_args()
 

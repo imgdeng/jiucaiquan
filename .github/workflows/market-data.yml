@@ -3,12 +3,17 @@ name: Build market data
 on:
   workflow_dispatch:
   schedule:
-    # China trading snapshots: 09:35, 10:05, 10:35, 11:05, 11:35, 13:35, 14:05, 14:35, 14:55, 15:05 CST.
+    # 中国时间 09:35 → UTC 01:35（开盘后 5 分钟）
     - cron: "35 1 * * 1-5"
-    - cron: "5,35 2 * * 1-5"
-    - cron: "5,35 3 * * 1-5"
+    # 中国时间 10:35 → UTC 02:35
+    - cron: "35 2 * * 1-5"
+    # 中国时间 11:35 → UTC 03:35
+    - cron: "35 3 * * 1-5"
+    # 中国时间 13:35 → UTC 05:35（下午开盘后 5 分钟）
     - cron: "35 5 * * 1-5"
-    - cron: "5,35,55 6 * * 1-5"
+    # 中国时间 14:35 → UTC 06:35
+    - cron: "35 6 * * 1-5"
+    # 中国时间 15:05 → UTC 07:05（收盘后 5 分钟）
     - cron: "5 7 * * 1-5"
 
 jobs:
@@ -18,13 +23,20 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
       - name: Install market data dependencies
         run: pip install -r services/market-data/requirements.txt
+
       - name: Build market data
+        id: build
         run: python services/market-data/build_market_data.py build-market-data
+        env:
+          JCQ_SOURCE_DIR: ${{ github.workspace }}
+
       - name: Commit updated data
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
