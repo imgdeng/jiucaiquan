@@ -23,13 +23,25 @@
 
 ### 2.1 从 Pages 入口开始（不要选 Worker！）
 
-登录 Cloudflare → 左侧 **Workers & Pages** → 右上角 **Create application** → **Pages** → **Connect to Git**（或者"Upload your static files"也可，但 Git 连接更方便以后自动部署）。
+登录 Cloudflare → 左侧 **Workers & Pages** → 右上角 **Create application** → **Pages** → **Connect to Git**。
 
-### 2.2 选仓库
+📸 **图示**（对应步骤页面）：
 
-选 `imgdeng/jiucaiquan` 仓库，授权 Cloudflare 访问。
+页面标题是 `Create application`，中间有 2 个大卡片。**选上半部分（Pages 那条线）**，点 `Connect with GitHub` → 选 `imgdeng/jiucaiquan` 仓库。
+
+⚠️ **不要选**下半部分的 "Deploy Worker"（`npx wrangler deploy`），那是给后端代码用的，韭菜圈是静态站，用 Pages 才对。如果你之前已经建了一个 Worker 项目，去 Workers & Pages 列表里把它 **Delete** 掉，然后按上面的步骤重建。
+
+### 2.2 选仓库 & 授权
+
+页面标题类似 `Install & authorize` 或 `Select a repository`：
+
+- Repository owner：选 `imgdeng`
+- Select repositories：选 `Only select repositories` → 勾上 `jiucaiquan` → 点 `Install`
+- 下一步选 Production branch = `main`
 
 ### 2.3 Build 设置（关键！这里最容易错）
+
+最终设置页面长这样（Cloudflare 字段名是英文的，按下面填）：
 
 | 字段 | 填什么 |
 |---|---|
@@ -40,11 +52,24 @@
 | **Build output directory** | **`apps/web/dist`** ⚠️ 这一项是关键——默认值 `dist` 会部署失败，因为我们是 monorepo 结构，产物在子目录里 |
 | Environment variables | 留空 |
 
-点 **Save and Deploy**，等 1-2 分钟。
+📸 **图示**（最终成功后的 Settings 截图）：
+
+在 Pages → `jiucaiquan` → **Settings** → Builds & deployments 里会看到：
+
+```
+Build command:      npm run build
+Build output:       apps/web/dist
+Root directory:     /
+Build comments:     Enabled
+Production branch:  main
+Automatic deployments: Enabled
+```
+
+**如果这里 Build output 只写了 `dist`，部署会失败**——必须改成 `apps/web/dist`。
+
+点 **Save and Deploy**，等 1-2 分钟，Build log 变绿就是成功。
 
 成功后会给一个临时域名 `https://jiucaiquan.pages.dev`，打开它看看首页、计算器、策略说明页面都能正常访问。
-
-> 💡 如果你之前不小心创建了 Worker 项目（`wrangler deploy`），直接删掉重建一个 Pages 项目即可。Worker 适合跑后端代码，静态站用 Pages 才对。
 
 ---
 
