@@ -1,0 +1,14 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ConditionOrderTool from "../../components/ConditionOrderTool";
+---
+<BaseLayout title="条件单计算器 | 韭菜圈">
+  <section class="mx-auto max-w-6xl px-4 py-10">
+    <div class="mb-6">
+      <p class="text-sm font-semibold text-leaf">核心工具</p>
+      <h1 class="mt-2 text-3xl font-bold md:text-5xl">ETF/股票次日条件单计算器</h1>
+      <p class="mt-4 max-w-3xl leading-8 text-stone-700">选择行情快照或手动输入 OHLC，计算低吸价、高抛价和观察价。结果仅作为条件单辅助参考。</p>
+    </div>
+    <ConditionOrderTool client:load />
+  </section>
+</BaseLayout>

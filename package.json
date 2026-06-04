@@ -1,0 +1,16 @@
+{
+  "name": "jiucaiquan",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm --workspace apps/web run dev",
+    "build": "npm --workspace apps/web run build",
+    "preview": "npm --workspace apps/web run preview",
+    "fetch-stock": "python3 services/market-data/build_market_data.py fetch-stock",
+    "fetch-etf": "python3 services/market-data/build_market_data.py fetch-etf",
+    "build-market-data": "python3 services/market-data/build_market_data.py build-market-data"
+  }
+}
