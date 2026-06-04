@@ -25,11 +25,13 @@
 
 登录 Cloudflare → 左侧 **Workers & Pages** → 右上角 **Create application** → **Pages** → **Connect to Git**。
 
-![Cloudflare Workers & Pages 首页](./images/01-cloudflare-workers-pages-home.png)
+![Cloudflare Workers & Pages 首页，右上角有 Create application 按钮](./images/cloudflare-workers-pages-home.png)
 
-![Create application 页面，选 Pages 不要选 Worker](./images/02-create-application.png)
+⚠️ **不要选**下半部分的 "Deploy Worker"（`npx wrangler deploy`），那是给后端代码用的，韭菜圈是静态站，用 Pages 才对。第一次部署时选错了类型会出现下面这样的失败：
 
-⚠️ **不要选**下半部分的 "Deploy Worker"（`npx wrangler deploy`），那是给后端代码用的，韭菜圈是静态站，用 Pages 才对。如果你之前已经建了一个 Worker 项目，去 Workers & Pages 列表里把它 **Delete** 掉，然后按上面的步骤重建。
+![第一次选错成 Worker 项目会部署失败，需要删掉重建](./images/pages-worker-deploy-failed.png)
+
+如果你之前已经建了一个 Worker 项目，去 Workers & Pages 列表里把它 **Delete** 掉，然后按上面的步骤重建 Pages 项目。
 
 ### 2.2 选仓库 & 授权
 
@@ -48,11 +50,9 @@
 | **Build output directory** | **`apps/web/dist`** ⚠️ 这一项是关键——默认值 `dist` 会部署失败，因为我们是 monorepo 结构，产物在子目录里 |
 | Environment variables | 留空 |
 
-![Build 设置页](./images/03-build-settings.png)
+![Build 设置页：Framework preset 选 Astro，Build output directory 填 apps/web/dist](./images/cloudflare-pages-build-settings.png)
 
-![Pages Settings 最终配置](./images/04-pages-settings-final.png)
-
-**如果这里 Build output 只写了 `dist`，部署会失败**——必须改成 `apps/web/dist`。
+**如果这里 Build output 只写了 `dist`，部署会失败**——必须改成 `apps/web/dist`，因为我们是 monorepo 结构，构建产物在子目录里。
 
 点 **Save and Deploy**，等 1-2 分钟，Build log 变绿就是成功。
 
@@ -66,33 +66,44 @@
 
 **第 1 步：把 `jiucaiquan.com` 加到 Cloudflare 做域名管理**
 
-Cloudflare 首页 → **Add Site** / **Add website** → 输入 `jiucaiquan.com` → 选 **Free 套餐**（$0/month）→ 扫描 DNS 记录时直接 Continue → 最后页面给你 2 个 Cloudflare nameserver。
+Cloudflare 首页 → **Add Site** / **Add website** → 选 **Connect a domain** → 输入 `jiucaiquan.com` → 选 **Free 套餐**（$0/month）→ 扫描 DNS 记录为空时直接 **Continue to activation** → 最后页面给你 2 个 Cloudflare nameserver。
 
-![Add Site 选 Free 套餐](./images/05-add-site-free-plan.png)
+![Add a site 页面，选 Connect a domain](./images/cloudflare-add-site.png)
 
-![Cloudflare 分配的 nameserver](./images/06-cloudflare-nameserver.png)
+![DNS management 空记录，点 Continue to activation 继续](./images/cloudflare-dns-management.png)
+
+![Cloudflare 分配的 nameserver：camilo.ns.cloudflare.com 和 fay.ns.cloudflare.com](./images/cloudflare-nameserver.png)
 
 **第 2 步：去阿里云改 DNS**
 
-![阿里云 DNS 修改页面](./images/07-aliyun-dns-modify.png)
+![阿里云 DNS 修改页面，nameserver 已替换成 Cloudflare 的两个地址](./images/aliyun-dns-modify.png)
 
 - 阿里云 → 控制台 → **域名** → `jiucaiquan.com` → **DNS 修改**
 - 把原来的 `dns11.hichina.com` / `dns12.hichina.com` 替换成 Cloudflare 给你的 2 个 nameserver（一行一个，第二个用"+ 添加DNS"按钮加）
 - 点蓝色 **"确定"** 按钮
-- 等待 10-60 分钟全球生效
+
+改完后 Cloudflare 域名 Overview 页面会从 "Pending" 状态逐渐变成 Active（一般 10-60 分钟）：
+
+![域名 Overview 页面显示等待 nameserver 传播](./images/cloudflare-domain-pending.png)
 
 **第 3 步：在 Pages 项目里绑自定义域名**
 
-![Pages → Custom domains → Set up](./images/08-pages-custom-domain-setup.png)
-
 Workers & Pages → `jiucaiquan` → **Custom domains** → **Set up a custom domain**：
+
+![Custom domains 初始页面，右上角 Set up a custom domain 按钮](./images/pages-custom-domains-setup.png)
+
+如果 DNS 还没完全生效，Custom domains 页面可能会提示需要先迁移 DNS 管理：
+
+![Custom domains 提示需要先迁移 DNS 管理，点 Begin DNS transfer](./images/pages-custom-domains-transfer.png)
+
+迁移完成后就可以添加域名了：
 
 1. 先输入 `jiucaiquan.com` → 提交 → 点 **Activate domain** → 状态变 **Active** + **SSL enabled**
 2. 再输入 `www.jiucaiquan.com` → 同样操作
 
-![Custom domains 最终状态](./images/09-custom-domains-active.png)
+![Custom domains 最终状态：jiucaiquan.com 和 www.jiucaiquan.com 都是 Active](./images/pages-custom-domains-active.png)
 
-> 提示：如果 Custom domains 页面提示 "先完成 DNS 迁移"，但你已经在阿里云改好了，等待一会儿 Cloudflare 会自动检测到，然后就可以直接输入域名提交。
+> 提示：如果 Custom domains 页面提示 "先完成 DNS 迁移"，但你已经在阿里云改好了，等待一会儿 Cloudflare 会自动检测到，然后就可以直接输入域名提交。SSL 证书签发也需要 3-10 分钟，期间 HTTPS 可能报红字错误，耐心等即可。
 
 ---
 
@@ -104,9 +115,7 @@ Workers & Pages → `jiucaiquan` → **Custom domains** → **Set up a custom do
 - `https://www.jiucaiquan.com`
 - `https://jiucaiquan.pages.dev`（临时域名保留方便排查问题）
 
-![韭菜圈首页最终效果](./images/10-jiucaiquan-homepage.png)
-
-![计算器页最终效果](./images/11-jiucaiquan-calculator.png)
+![韭菜圈首页最终效果](./images/jiucaiquan-homepage.png)
 
 都能正常打开首页、计算器页、策略说明页，就算部署 OK。
 
