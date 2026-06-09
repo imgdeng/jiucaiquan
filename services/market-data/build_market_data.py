@@ -5,7 +5,7 @@ import json
 import os
 import shutil
 import sys
-from datetime import date
+from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
@@ -15,7 +15,7 @@ from market_data.fetchers import (
     read_latest_csv,
     sort_quotes,
 )
-from market_data.schema import QuoteSnapshot, now_china_iso
+from market_data.schema import CHINA_TZ, QuoteSnapshot, now_china_iso
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT_DIR = ROOT / "apps" / "web" / "public" / "data"
@@ -63,7 +63,7 @@ def fetch_with_fallback(
             errors.append(f"csv fallback failed: {exc}")
 
     if not quotes:
-        return existing_count(output_path), "; ".join(errors) or "no quotes fetched"
+        return 0, "; ".join(errors) or "live fetch failed and no csv fallback available"
 
     write_json_atomic(output_path, quote_payload(quotes))
     return len(quotes), None
@@ -128,7 +128,7 @@ def run(args: argparse.Namespace) -> int:
     build_status(output_dir, stock_count, etf_count, errors)
 
     if args.archive:
-        archive_snapshot(output_dir, date.today().isoformat())
+        archive_snapshot(output_dir, datetime.now(CHINA_TZ).date().isoformat())
 
     if errors:
         print("warnings:", " | ".join(errors), file=sys.stderr)

@@ -110,14 +110,37 @@
 
 ### 明天（06-10）必须完成
 
-- 🟡 **百度统计后台验证**
-  - 登录 [tongji.baidu.com](https://tongji.baidu.com) → 查看 `jiucaiquan.com` 是否有 PV 数据（刷新一次首页应该有 1 条记录）
-- 🟡 **Cloudflare Pages 部署确认**
-  - 打开 Cloudflare → Workers & Pages → `jiucaiquan` → Deployments → 确认最新一条（`9d64440 feat(stats)`）是绿色 ✅
-- 🟡 **GitHub Actions 归档验证**
-  - 打开 `https://github.com/imgdeng/jiucaiquan/actions` → 看最近一次 `Build market data` 日志 → 确认有 `archive saved to .../archive/2026-06-09/` 字样
-- 🟡 **归档文件积累检查**
-  - 打开 `https://github.com/imgdeng/jiucaiquan/tree/main/apps/web/public/data/archive` → 应该有 `2026-06-09/` 目录（如果今天的 Actions 跑成功了）
+> 下方每一项都标注了"我已自动化验证（✅）"还是"需要你登录后人工确认（🔐）"，并附实测数据。
+
+- 🔐 **百度统计后台验证**（需人工登录）
+  - 登录 [tongji.baidu.com](https://tongji.baidu.com) → 查看 `jiucaiquan.com` 是否有 PV 数据
+  - 我已本地验证：`astro build` 后 4 个页面 HTML 中均包含 `https://hm.baidu.com/hm.js?fc5dabf3ea054ec5d0438eeeeba82f83`，脚本注入路径正确
+- 🔐 **Cloudflare Pages 部署确认**（需人工登录）
+  - 打开 Cloudflare → Workers & Pages → `jiucaiquan` → Deployments → 确认 `9d64440 feat(stats)` 与 `8a54c05 feat(data)` 两次构建均为绿色 ✅
+  - 我已本地验证：`astro check` → 0 errors / 0 warnings / 0 hints（10 files）；`astro build` → 4 pages built in 7.37s，完全成功
+- 🔐 **GitHub Actions 归档验证**（需人工登录）
+  - 打开 `https://github.com/imgdeng/jiucaiquan/actions` → 看最近一次 `Build market data` 日志 → 确认有 `archive saved to .../archive/YYYY-MM-DD/` 字样
+  - 我已本地验证：`python3 build_market_data.py build-market-data --no-live --archive --output-dir /tmp/jcq-test-data` 成功输出 `archive saved to /private/tmp/jcq-test-data/archive/2026-06-09`，脚本逻辑正常
+- ✅ **归档文件积累检查**（我已验证）
+  - 本地仓库 `apps/web/public/data/archive/2026-06-09/` 已存在，共 3 个文件 91,791 行（stock 71,683 行 + etf 20,099 行 + data-status 9 行）
+  - `git log --oneline` 确认 `8a54c05` 确实 commit 了这 3 个文件并推送到 `origin/main`，因此 `https://github.com/imgdeng/jiucaiquan/tree/main/apps/web/public/data/archive/2026-06-09/` 必然可访问
+
+### 06-09 晚间修复（三个 Bug）
+
+- ✅ **Fix 1：`fetch_with_fallback` 失败时返回 `(0, error)` 而非 `existing_count`**
+  - 修复前：live + csv fallback 都失败时，返回磁盘旧文件行数（如 5514），导致 `lastSuccessAt` 被误更新 + `stockCount > 0` 但 `errors` 非空
+  - 修复后：返回 `(0, "live fetch failed and no csv fallback available")`，`lastSuccessAt: null`，`stockCount/etfCount: 0`
+  - 验证：`--no-live --archive` 跑后 `data-status.json` → `lastSuccessAt: null, stockCount: 0, errors: [...]` ✅
+
+- ✅ **Fix 2：`archive_snapshot` 用 `datetime.now(CHINA_TZ)` 替代 `date.today()`**
+  - 修复前：`date.today()` 取系统本地时间，GitHub Actions runner 是 UTC，日后加 UTC 下午任务会归档到错误日期
+  - 修复后：`datetime.now(CHINA_TZ).date().isoformat()`，与 `now_china_iso()` 同源，保证归档目录名永远是中国交易日
+
+- ✅ **Fix 3：清理 `.gitignore` 注释行**
+  - 删除了 `# apps/web/public/data/archive/`（被注释的 exclude 规则，容易误导新读者）
+
+- ✅ **构建验证**：`npm run build` → 0 errors / 4 pages built
+- ✅ **commit**: `fix(data): fetch_with_fallback returns 0 on failure + CHINA_TZ archive date + .gitignore cleanup`
 
 ### 踩坑 / 心得
 
