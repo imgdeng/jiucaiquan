@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import sys
+from datetime import date
 from pathlib import Path
 from typing import Callable
 
@@ -80,6 +81,16 @@ def build_status(output_dir: Path, stock_count: int, etf_count: int, errors: lis
     write_json_atomic(output_dir / "data-status.json", status)
 
 
+def archive_snapshot(output_dir: Path, today_str: str) -> None:
+    archive_dir = output_dir / "archive" / today_str
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    for src_name in ("stock-latest.json", "etf-latest.json", "data-status.json"):
+        src = output_dir / src_name
+        if src.exists():
+            shutil.copy2(str(src), str(archive_dir / src_name))
+    print(f"archive saved to {archive_dir}")
+
+
 def run(args: argparse.Namespace) -> int:
     output_dir = Path(args.output_dir).resolve()
     source_dir = Path(args.source_dir).resolve()
@@ -115,6 +126,10 @@ def run(args: argparse.Namespace) -> int:
         print(f"etf output: {output_dir / 'etf-latest.json'} count={etf_count}")
 
     build_status(output_dir, stock_count, etf_count, errors)
+
+    if args.archive:
+        archive_snapshot(output_dir, date.today().isoformat())
+
     if errors:
         print("warnings:", " | ".join(errors), file=sys.stderr)
     return 0
@@ -126,6 +141,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
     parser.add_argument("--source-dir", default=str(DEFAULT_SOURCE_DIR))
     parser.add_argument("--no-live", action="store_true", help="Skip AkShare live fetch and use latest local CSV fallback.")
+    parser.add_argument("--archive", action="store_true", help="Archive today's snapshot to data/archive/YYYY-MM-DD/ after fetch.")
     return parser.parse_args()
 
 

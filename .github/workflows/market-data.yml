@@ -33,7 +33,7 @@ jobs:
 
       - name: Build market data
         id: build
-        run: python services/market-data/build_market_data.py build-market-data
+        run: python services/market-data/build_market_data.py build-market-data --archive
         env:
           JCQ_SOURCE_DIR: ${{ github.workspace }}
 
@@ -41,4 +41,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: update market data snapshots"
-          file_pattern: apps/web/public/data/*.json
+          file_pattern: apps/web/public/data/*.json apps/web/public/data/archive/*/*.json

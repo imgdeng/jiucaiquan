@@ -5,3 +5,5 @@ dist/
 .DS_Store
 *.pyc
 __pycache__/
+# Do NOT ignore archive directory - we commit it for backtesting
+# apps/web/public/data/archive/
