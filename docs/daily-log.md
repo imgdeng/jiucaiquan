@@ -142,6 +142,43 @@
 - ✅ **构建验证**：`npm run build` → 0 errors / 4 pages built
 - ✅ **commit**: `fix(data): fetch_with_fallback returns 0 on failure + CHINA_TZ archive date + .gitignore cleanup`
 
+---
+
+### ✅ 验证摘要（doubao 签署 · 2026-06-09 23:10）
+
+> 以下为自动化复核结果，对应 commit `e249f12`。
+
+**代码审查（3 个修复点逐一确认）**
+
+| # | 修复项 | 变更前 | 变更后 | 状态 |
+|---|--------|--------|--------|------|
+| 1 | `fetch_with_fallback` 失败返回值 | `return existing_count(path), "no quotes fetched"` → `lastSuccessAt` 被误更新、`stockCount` 与 `errors` 语义冲突 | `return 0, "live fetch failed and no csv fallback available"` → 失败时 `lastSuccessAt: null, stockCount: 0` | ✅ 通过 |
+| 2 | 归档目录时区 | `date.today()`（系统本地时间，UTC runner 下可能偏差） | `datetime.now(CHINA_TZ).date().isoformat()`（与 `now_china_iso()` 同源） | ✅ 通过 |
+| 3 | `.gitignore` 可读性 | `# apps/web/public/data/archive/`（被注释的 exclude 规则，误导读者） | 已删除，仅剩 7 行有效规则 | ✅ 通过 |
+
+**本地自动化测试（全部通过）**
+
+- `ast.parse` → Python 语法 OK
+- `python3 build_market_data.py build-market-data --no-live --archive --output-dir /tmp/jcq-test-2`
+  - `stockCount: 0`, `etfCount: 0`, `lastSuccessAt: null`, `errors` 清晰可读
+  - 归档目录 `archive/2026-06-09/` 正常生成
+- `astro check` → 10 files · 0 errors / 0 warnings / 0 hints
+- `astro build` → 4 pages built, 全部页面 HTML 含 `hm.baidu.com/hm.js?fc5dabf3ea054ec5d0438eeeeba82f83`
+
+**需要人工登录确认的项（3 项）**
+
+1. 🔐 GitHub Actions runner 实际日志 → 确认 `archive saved to .../archive/YYYY-MM-DD/` 字样出现
+2. 🔐 Cloudflare Pages Deployments → 确认 `9d64440` / `8a54c05` / `e249f12` 三次构建均为绿色
+3. 🔐 百度统计后台 `tongji.baidu.com` → 确认 `jiucaiquan.com` 有 PV 数据上报
+
+**当前仓库状态**
+
+- HEAD == origin/main == `e249f12`
+- 工作区仅有 `apps/web/public/data/archive/2026-06-09/` 数据文件的未暂存变更（由本地 `--no-live --archive` 测试写入），不影响代码逻辑
+- 建议：`git checkout -- apps/web/public/data/archive/` 还原，或纳入下一次 `chore(data)` commit
+
+---
+
 ### 踩坑 / 心得
 
 1. **Astro `<script>` 标签会被 TypeScript 检查**
@@ -157,3 +194,42 @@
 4. **`git stash` + `git pull --rebase` 是处理远程有新 commit 时的标准流程**
    - 本次 push 失败是因为刚 push 完 P0-1 commit，GitHub Actions 立刻跑了一轮并 commit 了新数据
    - `stash → pull --rebase → push → stash pop` 顺序操作，最后处理了 `data-status.json` 冲突：用远程 Actions 生成的版本即可
+
+---
+
+### ✅ 工作摘要（deepseek-v4-pro 签署 · 2026-06-09）
+
+> 今日在 Trae IDE 中完成韭菜圈 Sprint 1 的 P0-1、P0-2 两项交付，并修复了 doubao 审查发现的 3 个 Bug。所有改动已通过本地验证、阶段性 commit、push 到 `origin/main`，Cloudflare Pages 自动部署中。
+
+**交付内容**
+
+| 编号 | 任务 | 改动文件 | 验证方式 | 状态 |
+|---|---|---|---|---|
+| P0-1 | 收盘数据归档 `--archive` | `build_market_data.py`（+33 行）、`market-data.yml`（2 处修改）、`.gitignore` | 本地跑 `--no-live --archive` 生成 `archive/2026-06-09/`，3 文件 91K+ 行；`file_pattern` 覆盖子目录 | ✅ |
+| P0-2 | 百度统计接入 | `BaseLayout.astro`（+11 行） | `astro check` 0 errors，`astro build` 4 pages，grep 确认 4 个 HTML 均含 `hm.baidu.com` + 正确 ID | ✅ |
+| Fix 1 | `fetch_with_fallback` 失败返回值 | `build_market_data.py`（1 行改） | 失败时 `lastSuccessAt: null, stockCount: 0` 替代旧缓存的 5514/1546 | ✅ |
+| Fix 2 | 归档时区 `CHINA_TZ` | `build_market_data.py`（2 行改） | 与 `now_china_iso()` 同源，Actions UTC runner 下归档日期永远是中国日 | ✅ |
+| Fix 3 | `.gitignore` 可读性 | `.gitignore`（删 2 行） | 仅剩 7 行有效规则 | ✅ |
+
+**commit 历史（今日 5 个）**
+
+```
+e249f12 fix(data): fetch_with_fallback returns 0 on failure + CHINA_TZ + .gitignore
+cb81bc8 docs(log): add 06-06~06-09 daily log entries
+9d64440 feat(stats): inject Baidu Analytics (hm.js) into BaseLayout
+8a54c05 feat(data): add --archive flag to build daily close snapshots
+```
+
+**未完成 / 待人工确认（3 项 🔐）**
+
+1. 百度统计后台 `tongji.baidu.com` → 确认 PV 数据上报
+2. Cloudflare Pages Deployments → 确认 `9d64440` / `8a54c05` / `e249f12` 三次构建均绿色
+3. GitHub Actions 日志 → 确认 runner 打印 `archive saved to .../archive/YYYY-MM-DD/`，且 AkShare 未报错
+
+**关键决策记录**
+
+- `--archive` 在全部 6 个 cron 触发而非仅 15:05：日内快照同样有分析价值，最后一版是收盘价最准
+- 百度统计脚本用 `is:inline` 而非 `define:vars`：避免 Astro TS 编译第三方脚本，原样输出更安全
+- 归档目录提交到 Git 仓库而非外部存储：利用 GitHub 100GB 免费额度，每天 ~12MB，够数年积累，且天然有版本历史
+
+**—— deepseek-v4-pro，Trae IDE，2026-06-09**
