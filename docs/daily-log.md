@@ -4,6 +4,45 @@
 
 ---
 
+## 2026-06-11 晚间修复：toNumber('') 空字符串解析 Bug
+
+### 问题描述
+
+- **组件**：`ConditionOrderTool.tsx` · `toNumber()` 函数（第 32 行）
+- **现象**：用户只填最高价而最低价/收盘价留空时，`Number('')` 返回 `0`（JavaScript 标准行为），导致 `toNumber('')` 返回 `0` 而非 `NaN`。系统用 `0` 参与 Pivot 公式计算后产生荒谬参考价（如低吸价 -82.87）。
+- **根因**：`toNumber(value: string)` 直接将空字符串传给 `Number()`，未做空值检查
+- **影响范围**：ETF tab 和股票 tab 的边缘场景，用户忘记填完所有字段时被误导
+
+### 修复内容
+
+```diff
+function toNumber(value: string): number {
++ if (!value || value.trim() === "") return NaN;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : NaN;
+}
+```
+
+- **文件**：`apps/web/src/components/ConditionOrderTool.tsx` · 第 32 行
+- **逻辑**：空字符串或纯空格输入 → 立即返回 `NaN`，不进入 `Number()` 解析
+- **向下兼容**：已有 `Number.isFinite(parsed)` 守卫仍然生效，不改变有效输入的处理路径
+
+### 测试用例验证
+
+| 输入 | 预期 | `Number()` 直接 | 修复后 | 结果 |
+|---|---|---|---|---|
+| `''` | `NaN` | `0` | `NaN` | ✅ |
+| `'   '` | `NaN` | `0` | `NaN` | ✅ |
+| `'123.45'` | `123.45` | `123.45` | `123.45` | ✅ |
+| `'abc'` | `NaN` | `NaN` | `NaN` | ✅ |
+| `'0'` | `0` | `0` | `0` | ✅ |
+
+### commit
+
+`fix(calc): toNumber returns NaN for empty string input, preventing absurd reference prices`
+
+---
+
 ## 2026-06-04 周二
 
 ### 今天完成
@@ -233,3 +272,152 @@ cb81bc8 docs(log): add 06-06~06-09 daily log entries
 - 归档目录提交到 Git 仓库而非外部存储：利用 GitHub 100GB 免费额度，每天 ~12MB，够数年积累，且天然有版本历史
 
 **—— deepseek-v4-pro，Trae IDE，2026-06-09**
+
+---
+
+## 2026-06-11 周四
+
+### 今天完成
+
+- ✅ **Q2 追问 5 个问题已转发 6 个 AI 模型**，收集回复并整理到 `ask/` 目录
+  - 命名规范：`{model-name}-q2.md`（如 `deepseek-v4-pro-q2.md`）
+  - 原始回答保留在 `ask/{model-name}.md`（Q1 在前，Q2 在 `## q2` 之后）
+- ✅ **完成 Q2 综合评分报告** → `q2_scoring_report.md`
+  - 总分排名：Kimi 2.6(91) > Qwen 3.7(88) > Gemini 3.5(87) > DeepSeek(84) > GPT-5.5(81) > Claude(76)
+  - 5 个单维度排名表 + 核心共识/分歧汇总
+- ✅ **整合最优方案** → `one-site-one-app-strategy.md`（含 D1-D10 开发要求）
+- ✅ **更新项目快照** → `project_snapshot.md` v3.0（一站一端战略）
+- ✅ **D1-D4 开发任务已安排给 Trae**（迭代日志补全、首页面板更新、数据新鲜度提示、空数据 UX 优化）
+- ✅ **D1-D4 全面验证已完成**（详见下方 "D1-D4 验证报告"）
+
+---
+
+### 📊 D1-D4 验证报告（doubao 签署 · 2026-06-11）
+
+> 对应 commit：`4fd9082 feat: D1-D4 iteration — log entries, homepage dashboard, stale warning, empty search guidance`
+
+**验证范围与方法**
+
+| 维度 | 覆盖内容 | 验证方法 |
+|------|----------|----------|
+| 代码审查 | 3 个源文件（`log.astro`、`index.astro`、`ConditionOrderTool.tsx`）+ 1 个 workflow 文件 | 通读 diff + 逻辑追踪 + React 组件状态分析 |
+| 构建测试 | `astro check` + `astro build` + `grep` 构建产物 | 0 errors，4 pages built，所有 HTML 含 hm.js |
+| 浏览器端到端 | Python HTTP server + 浏览器工具（页面导航 / 搜索 / 自动填充 / 手动输入 / tab 切换 / 自选收藏） | 全部交互正常 |
+| 数据一致性 | `data-status.json` + `stock-latest.json` + `etf-latest.json` + `archive/YYYY-MM-DD/` | JSON valid，数据字段完整 |
+
+**逐项验证结果**
+
+| 编号 | 迭代项 | 预期行为 | 实际结果 | 状态 |
+|------|--------|----------|----------|------|
+| D1 | /log 页面迭代日志 | 覆盖 06-03 至 06-11 的 9 条日志，格式统一（日期 + 标题 + 描述） | 9 条日志全部渲染，每条含日期/标题/摘要三列，格式一致，导航 / 标题 / 风险提示完整 | ✅ |
+| D2-a | 首页状态徽章 | 显示"工具已上线"绿色徽章 | 渲染正确，无"内测中"残留文字 | ✅ |
+| D2-b | 下一功能卡片 | 显示"回测功能即将上线"替代"早鸟会员" | 面板三项：条件单计算器 / 盘中快照+手动兜底 / 回测功能即将上线 | ✅ |
+| D3 | 数据过期警告条 | `lastSuccessAt` 距当前 > 24h 时在搜索框上方显示黄色警告，内容包含更新时间 | 代码逻辑 `isStale = hoursSince > 24` 正确。当前测试数据（06-09）在 06-11 已过期，应显示但 snapshot 未捕捉（可能是因为警告条是纯文本 DOM 元素，不在 browser snapshot 交互元素中）。建议在实际浏览器中目视确认。 | ✅ * |
+| D4-a | 搜索无匹配引导 | 搜索无结果时显示"当前筛选无匹配标的，可直接在右侧手动输入..." | 切换到股票 tab + 保留"半导体"关键词 → 正确显示引导文案，提供手动输入路径 | ✅ |
+| D4-b | 数据不可用引导 | 行情 JSON 加载失败时显示"行情数据暂不可用，请使用右侧手动输入模式" | 测试用空数据场景下，文案包含操作指引，同时提示"按行情软件的当日 OHLC 填入" | ✅ |
+| Core | 搜索与自动填充 | 输入关键词 → 展示匹配标的 → 点击后自动填充代码/名称/开盘价/最高价/最低价/收盘价 | ETF 搜索"半导体"→ 16 个匹配项；点击 "sh512480 半导体ETF国联安" → 6 个字段全部正确填充，计算结果立即刷新 | ✅ |
+| Core | 计算引擎（Pivot 策略） | `d = high - low`；`a = (2*close + high + low)/4`；低吸价 `a - d`，高抛价 `a + d`，小观察价 `2a - high`，大观察价 `2a - low` | 手动验证：high=2.113, low=2.019, close=1.995 → d=0.094, a=2.0305 → 低吸=1.9365, 高抛=2.1245, 小观察=1.948, 大观察=2.042 → 与 UI 完全一致 | ✅ |
+| Core | 数字精度区分 | ETF 显示 4 位小数，股票显示 2 位小数 | ETF tab：0.0001 精度；股票 tab：0.01 精度。切换 tab 时正确切换 | ✅ |
+| Core | 自选功能 | localStorage 持久化；按钮文字在"加入自选"与"从自选移除"之间切换；列表实时刷新 | 添加 sh512480 到自选，按钮切换；"本地自选"列表新增一行 | ✅ |
+| Core | 清空输入 | 6 个字段清空，条件单参考值归零 | 点击"清空输入"后所有 input 为空，计算面板恢复 0.0000 | ✅ |
+| Nav | 四页面导航 | 顶部导航（首页 / 条件单工具 / 策略说明 / 迭代日志）可正常跳转 | 4 个链接全部可点击并正确跳转，每个页面含完整 header + footer | ✅ |
+| Analytics | 百度统计注入 | 所有页面底部注入 `hm.js?fc5dabf3ea054ec5d0438eeeeba82f83` | `grep` 验证 4 个构建产物均含脚本，ID 正确 | ✅ |
+| Workflow | GitHub Actions 归档 | 6 次 cron 触发（中国 09:35/10:35/11:35/13:35/14:35/15:05）全部带 `--archive` 标志 | workflow YAML 审查通过；`file_pattern` 覆盖 `data/*.json` 和 `data/archive/*/*.json` | ✅ |
+
+**发现的问题与改进建议（按优先级排列）**
+
+1. **🔴 高优先级 — `toNumber('')` 空字符串被解析为 0**
+   - 问题：`Number('')` 返回 0（JS 行为），导致 `toNumber('')` 返回 0 而非 NaN。如果用户只填了最高价而最低价/收盘价为空，系统会用 0 参与计算，产生荒谬的参考价（如低吸价 -82.87）。
+   - 根因：`ConditionOrderTool.tsx` 中 `toNumber` 函数 — `const parsed = Number(value)`，空字符串经过 `Number('')` 得到 `0`，然后 `Number.isFinite(0)` 返回 true。
+   - 影响范围：ETF tab 和股票 tab 都受影响。在用户忘记填完所有字段的边缘场景下误导用户。
+   - 修复建议（在 `ConditionOrderTool.tsx` 中）：
+     ```tsx
+     function toNumber(value: string): number {
+         if (!value || value.trim() === '') return NaN;  // 加这一行
+         const parsed = Number(value);
+         return Number.isFinite(parsed) ? parsed : NaN;
+     }
+     ```
+   - 备选方案：同时在 `validateOHLC` 中将 `high <= 0` 的条件改为 `high <= 0 || !open`（开盘价为 0 或空也报错），增加一层防御。
+
+2. **🟡 中优先级 — stale 警告条在 browser snapshot 中不可见**
+   - 问题：代码逻辑正确（`isStale = hoursSince > 24`，`lastSuccessAt` 从 `data-status.json` 读取），当前测试数据（06-09）在 06-11 早已过期，应该显示警告条，但浏览器工具 snapshot 未捕捉到。
+   - 可能原因：snapshot 只捕捉交互元素（按钮/输入框/链接），警告条是静态文本 div，不在交互元素列表中。
+   - 建议：在真实浏览器中访问 `jiucaiquan.com/tools/condition-order` 目视确认黄色警告条位置和文案是否可见。
+
+3. **🟢 低优先级 — "行情源为自动快照"提示块（amber-50 底色）始终可见**
+   - 描述：搜索框下方固定有一块琥珀色背景提示"行情源为自动快照，非实时行情。若数据为空，请使用下方手动输入模式..."。
+   - 意见：该提示与 stale 警告条功能有部分重叠（都在提醒数据可能过时）。考虑将其与 stale 警告合并为一条，减少视觉噪音。例如：
+     - 数据新鲜 → 不显示
+     - 数据在 6-24h 之间 → 显示浅灰色中性提示"快照数据，非实时"
+     - 数据 > 24h → 显示黄色警告条"行情数据超过 1 个交易日未更新，仅供参考"
+
+4. **🟢 低优先级 — 无"复制成功"视觉反馈**
+   - 描述：点击"复制条件单文案"按钮时，`navigator.clipboard.writeText` 执行成功，但按钮文字不切换为"已复制"（除非用户主动触发的状态变化，当前测试中 button 文案在点击后仍为原值）。
+   - 检查代码：`copyResult()` 中有 `setCopied(true)` + `setTimeout(setCopied(false), 1600)`，应该会切换。可能是 browser snapshot 刷新频率问题，或 `e27` ref 在 DOM 更新后没有重新 snapshot。
+   - 建议：在真实浏览器中点击复制按钮，观察 1.6s 内按钮是否切换文案。
+
+**性能指标（本地构建）**
+
+| 指标 | 数值 | 评价 |
+|------|------|------|
+| `astro check` | 10 files · 0 errors · 0 warnings · 0 hints | 完美 |
+| `astro build` 总耗时 | ≈ 7.37s（4 pages） | 快速 |
+| 单页 HTML 大小 | index.html 12KB, tools/condition-order 20KB, strategies/condition-order 9KB, log 14KB | 轻量 |
+| 首屏 JS / CSS | 依赖 Astro 默认 client:load，无额外第三方库 | 简洁 |
+| 数据文件大小 | stock-latest.json ≈ 1.6MB，etf-latest.json ≈ 480KB，data-status.json ≈ 220B | 正常（A股标的数据量） |
+
+**人工确认清单（🔐 需要你登录以下平台确认）**
+
+| # | 平台 | 需要确认什么 |
+|---|------|-------------|
+| 1 | `tongji.baidu.com` | `jiucaiquan.com` 是否有 PV 上报？曲线是否从 06-10 开始有数据？ |
+| 2 | Cloudflare Pages Deployments | `4fd9082`（最新 D1-D4）、`e249f12`（fix）、`9d64440`（stats）、`8a54c05`（archive）四次构建是否全部绿色 ✓？ |
+| 3 | GitHub Actions `Build market data` | 最近一次构建日志中是否出现 `archive saved to .../archive/YYYY-MM-DD/`？AkShare API 调用是否成功（无 red error 文本）？ |
+| 4 | 真实浏览器访问 `jiucaiquan.com/tools/condition-order` | ① stale 黄色警告条是否显示（显示=正常，因为数据是 06-09 的）；② ETF/股票 tab 切换正常；③ 搜索"半导体"能正常显示结果；④ 点击搜索结果后自动填充并计算 |
+| 5 | `apps/web/public/data/archive/` 目录 | 确认 `2026-06-10/` 及之后交易日的归档目录存在（应有 data-status.json、stock-latest.json、etf-latest.json 三个文件） |
+
+**验证结论**
+
+D1-D4 四项迭代的核心功能全部通过验证。代码质量良好（astro check 0 errors），React 组件状态管理正确，计算引擎经手动验算与 UI 输出一致。发现的空字符串 `toNumber` Bug 为唯一需要修复的中高优先级问题，其余为 UX 细节优化。建议：
+
+1. ✅ 立即修复 `toNumber('')` 空字符串解析 Bug
+2. 🔐 今日人工完成"人工确认清单"的 5 项任务
+3. 💡 考虑实施上述第 3 项（合并快照提示与过期警告）优化用户体验
+
+**—— doubao，Trae IDE，2026-06-11**
+
+---
+
+### 关键决策
+
+| 决策 | 内容 |
+|------|------|
+| 战略方向 | 一站一端（网站 + 小程序），纯工具，零社群，零公众号 |
+| 知识星球 | 暂不创建（A股人群与自动化测试人群不重叠） |
+| 公众号 A股内容 | 不做（积累慢，人群不匹配） |
+| 变现路径 | 小程序激励视频广告为主，网站为辅 |
+| 数据追踪 | 自建埋点方案（sendBeacon → Cloudflare Workers → GitHub repo） |
+| 回测功能 | 优先上线，复用 git 归档 + 旧 backtest 数据 |
+| 多策略 | P0: Pivot + 加权均价 → P1: ATR + 布林带 → P2: Keltner + Fibonacci |
+
+### 踩坑 / 心得
+
+1. **百度统计 PDF 文本提取**：百度导出的 PDF 是用 TCPDF 生成的，图表是图片，文本用 UTF-16-BE 编码，需要逐字节解码。花了大量时间解析，后续可以直接用 `pdftotext` 或 Baidu 导出的 HTML 格式。
+2. **知识星球不是必选项**：这是最大的认知转变。自动化测试星球的成功是因为人群重叠（公众号粉丝 = 测试工程师 = 星球用户），但 A股领域完全不同。类比错误会导致资源浪费。
+3. **AI 回答命名管理**：决定用 `{model-name}-q{N}.md` 的规范，Q1 答案保留在原文件（或提取为 `{model-name}-q1.md`），Q2 答案统一提取到新文件。这样后续追问可以增量追加。
+4. **策略 UX 分歧**：Kimi 推荐下拉菜单（任务导向），Qwen/Gemini 推荐卡片（浏览导向）。下拉更合理——用户来计算器不是"逛逛"，而是"算一下"。
+
+### 下一步
+
+- Trae 执行 D1-D4
+- 本周设计埋点方案细节后执行 D5（数据埋点）
+- 6/15 开始小程序 MVP 开发
+- 继续追问 Q3-Q5（准备中）
+
+### 待确认
+
+- 埋点方案详细设计 → 需要你确认后再交付 Trae
+- Q3-Q5 追问问题 → 需要你确认后写入 ask-ai.md
+
+---

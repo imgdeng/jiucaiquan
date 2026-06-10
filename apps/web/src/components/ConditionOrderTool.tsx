@@ -29,6 +29,7 @@ type DataStatus = {
 type WatchItem = { code: string; name: string };
 
 function toNumber(value: string): number {
+  if (!value || value.trim() === "") return NaN;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : NaN;
 }
