@@ -150,6 +150,15 @@ export default function ConditionOrderTool() {
   const dataCount = assetType === "etf" ? etfQuotes.length : stockQuotes.length;
   const latestTime = status?.lastSuccessAt || status?.generatedAt || quotes[0]?.snapshotAt;
 
+  const isStale = useMemo(() => {
+    if (!status?.lastSuccessAt) return false;
+    const last = new Date(status.lastSuccessAt).getTime();
+    const hoursSince = (Date.now() - last) / 1000 / 3600;
+    return hoursSince > 24;
+  }, [status?.lastSuccessAt]);
+
+  const dataAvailable = quotes.length > 0;
+
   return (
     <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
       <section className="rounded-lg border border-line bg-white p-5 shadow-sm">
@@ -179,6 +188,11 @@ export default function ConditionOrderTool() {
         <label className="block text-sm font-semibold" htmlFor="quote-search">
           搜索代码或名称
         </label>
+        {isStale && (
+          <div className="mt-3 rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+            行情数据超过 1 个交易日未更新（最后更新：{latestTime}），仅供参考。请使用下方手动输入模式填入实时价格。
+          </div>
+        )}
         <input
           id="quote-search"
           className="focus-ring mt-2 w-full rounded-md border border-line px-3 py-3"
@@ -202,8 +216,15 @@ export default function ConditionOrderTool() {
                 <span className="text-sm text-stone-600">{q.latest}</span>
               </button>
             ))
+          ) : dataAvailable ? (
+            <p className="p-4 text-sm text-stone-600">
+              当前筛选无匹配标的，可直接在<b>右侧手动输入</b>开盘/最高/最低/收盘价完成计算。
+            </p>
           ) : (
-            <p className="p-4 text-sm text-stone-600">没有匹配数据，可直接在右侧手动输入。</p>
+            <div className="p-4 text-sm text-stone-600 space-y-2">
+              <p>行情数据暂不可用，请使用<b>右侧手动输入</b>模式。</p>
+              <p>按行情软件（如同花顺、东方财富）的当日 OHLC 数据填入开盘价、最高价、最低价、收盘/最新价即可。</p>
+            </div>
           )}
         </div>
 

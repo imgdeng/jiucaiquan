@@ -7,6 +7,46 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <h1 class="mt-2 text-3xl font-bold md:text-5xl">迭代日志</h1>
     <div class="mt-8 space-y-4">
       <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-06-11</p>
+        <h2 class="mt-2 text-xl font-bold">D1-D4 工具迭代</h2>
+        <p class="mt-3 leading-8 text-stone-700">迭代日志页补全 8 条记录、首页面板状态更新为"工具已上线"、早鸟会员卡片替换为"回测功能即将上线"、数据过期黄色警告条上线、空行情搜索引导文案优化。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-06-10</p>
+        <h2 class="mt-2 text-xl font-bold">部署验证与数据积累</h2>
+        <p class="mt-3 leading-8 text-stone-700">Cloudflare Pages 三次构建确认绿色、GitHub Actions 归档脚本正常运行、百度统计 PV 数据开始上报、archive 目录首个交易日快照积累完成。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-06-09</p>
+        <h2 class="mt-2 text-xl font-bold">P0-1 收盘归档 + P0-2 百度统计</h2>
+        <p class="mt-3 leading-8 text-stone-700">实现 --archive 收盘数据归档（每日 6 次快照写入 archive/YYYY-MM-DD/）、GitHub Actions workflow 更新 file_pattern 覆盖子目录、BaseLayout 注入百度统计 hm.js（is:inline 绕过 TS 编译）、修复 fetch_with_fallback 失败返回值与时区 Bug。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-06-08</p>
+        <h2 class="mt-2 text-xl font-bold">Sprint 1 剩余计划评审</h2>
+        <p class="mt-3 leading-8 text-stone-700">确定优先级排序：P0-1 收盘归档 &gt; P0-2 统计接入 &gt; P0-3 知识星球 &gt; P1-1 迭代日志。对比旧 backtest 项目 42 天候选标的 + 7 只 ETF 日线 + 回测引擎，确认回测功能数据基础充足。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-06-07</p>
+        <h2 class="mt-2 text-xl font-bold">回测数据资产盘点</h2>
+        <p class="mt-3 leading-8 text-stone-700">梳理 backtest/aitrade/ 下 daily_candidates/（42 天 OHLC）、daily_top/（~90 天排名）、data/history/（7 只 ETF 多年日线），确认 advanced_backtest31.py 回测引擎可直接复用。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-06-06</p>
+        <h2 class="mt-2 text-xl font-bold">行情自动化验证</h2>
+        <p class="mt-3 leading-8 text-stone-700">GitHub Actions Build market data 经检查正常运行（6月5日—8日累计 12 次成功触发），AkShare 实时行情获取稳定，JSON 快照文件正常更新并提交到仓库。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-06-05</p>
+        <h2 class="mt-2 text-xl font-bold">部署文档升级为图文版</h2>
+        <p class="mt-3 leading-8 text-stone-700">从 36 张部署过程编号截图中筛选 12 张关键截图，重命名为描述性文件名（cloudflare-pages-build-settings.png 等），更新 deploy-to-cloudflare-pages.md 中所有图片引用，清理 24 张冗余截图。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-06-04</p>
+        <h2 class="mt-2 text-xl font-bold">Sprint 1 核心交付上线</h2>
+        <p class="mt-3 leading-8 text-stone-700">域名 jiucaiquan.com 绑定 Cloudflare Pages、HTTPS/SSL 签发完成、首页 + 条件单计算器 + 策略说明页 + 迭代日志页 4 页面可公开访问、Git SSH key 配置完成、行情数据 JSON 快照就绪。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
         <p class="text-sm text-stone-600">2026-06-03</p>
         <h2 class="mt-2 text-xl font-bold">Sprint 1 启动</h2>
         <p class="mt-3 leading-8 text-stone-700">确定第一版只做 ETF/股票次日条件单计算器，采用静态网站 + 后台行情快照文件的方式上线。</p>
