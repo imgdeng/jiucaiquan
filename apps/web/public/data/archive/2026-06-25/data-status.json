@@ -1,9 +1,7 @@
 {
-  "generatedAt": "2026-06-25T14:35:14+08:00",
-  "lastSuccessAt": "2026-06-25T14:35:14+08:00",
-  "stockCount": 0,
+  "generatedAt": "2026-06-25T15:02:50+08:00",
+  "lastSuccessAt": "2026-06-25T15:02:50+08:00",
+  "stockCount": 5510,
   "etfCount": 1568,
-  "errors": [
-    "stock: live fetch failed: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))"
-  ]
+  "errors": []
 }
