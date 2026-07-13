@@ -1,9 +1,7 @@
 {
-  "generatedAt": "2026-07-13T14:40:24+08:00",
-  "lastSuccessAt": "2026-07-13T14:40:24+08:00",
-  "stockCount": 5363,
-  "etfCount": 0,
-  "errors": [
-    "etf: live fetch failed: ('Unknown identifier', 'IO')"
-  ]
+  "generatedAt": "2026-07-13T16:36:01+08:00",
+  "lastSuccessAt": "2026-07-13T16:36:01+08:00",
+  "stockCount": 5523,
+  "etfCount": 1594,
+  "errors": []
 }
