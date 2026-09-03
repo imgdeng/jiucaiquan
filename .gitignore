@@ -5,3 +5,6 @@ dist/
 .DS_Store
 *.pyc
 __pycache__/
+# 本地 wrangler 开发配置（D1 database_id 不应入库，绑定在 CF 控制台配置）
+wrangler.toml
+.wrangler/

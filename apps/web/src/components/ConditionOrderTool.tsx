@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AssetType, OHLCRaw } from "../lib/strategies/condition-order";
 import {
   calculateConditionOrder,
@@ -6,6 +6,7 @@ import {
   buildCopyText,
   validateOHLC,
 } from "../lib/strategies/condition-order";
+import { track } from "../lib/telemetry";
 
 type QuoteSnapshot = {
   code: string;
@@ -81,6 +82,29 @@ export default function ConditionOrderTool() {
     });
   }, []);
 
+  // 埋点：页面访问（StrictMode 双调用去重）
+  const didPageView = useRef(false);
+  useEffect(() => {
+    if (didPageView.current) return;
+    didPageView.current = true;
+    track("page_view", { asset: assetType });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 埋点：搜索（800ms 防抖，连续相同关键词只记一次）
+  const lastSearchKey = useRef("");
+  useEffect(() => {
+    const keyword = query.trim();
+    if (keyword.length < 1) return;
+    const key = `${assetType}:${keyword.toLowerCase().slice(0, 24)}`;
+    if (key === lastSearchKey.current) return;
+    lastSearchKey.current = key;
+    const timer = setTimeout(() => {
+      track("search", { asset: assetType, term: keyword.slice(0, 24) });
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [query, assetType]);
+
   const quotes = assetType === "etf" ? etfQuotes : stockQuotes;
   const matches = useMemo(() => {
     const keyword = query.trim().toLowerCase();
@@ -113,7 +137,22 @@ export default function ConditionOrderTool() {
 
   const copyText = result ? buildCopyText(form.code, form.name, result) : "";
 
+  // 埋点：有效计算结果（同一标的+tab 只记一次；手动输入按 manual 归并）
+  const lastCalcKey = useRef("");
+  useEffect(() => {
+    if (!result) return;
+    const key = `${assetType}:${form.code || "manual"}`;
+    if (key === lastCalcKey.current) return;
+    lastCalcKey.current = key;
+    track("calculate", {
+      asset: assetType,
+      code: form.code || undefined,
+      name: form.name.slice(0, 20) || undefined,
+    });
+  }, [result, assetType, form.code, form.name]);
+
   function selectQuote(q: QuoteSnapshot) {
+    track("select_quote", { asset: assetType, code: q.code, name: q.name.slice(0, 20) });
     setForm({
       code: q.code,
       name: q.name,
@@ -132,6 +171,11 @@ export default function ConditionOrderTool() {
   function toggleWatch() {
     if (!form.code) return;
     const exists = watchlist.some((w) => w.code === form.code);
+    track(exists ? "watch_remove" : "watch_add", {
+      asset: assetType,
+      code: form.code,
+      name: form.name.slice(0, 20) || undefined,
+    });
     const next = exists
       ? watchlist.filter((w) => w.code !== form.code)
       : [{ code: form.code, name: form.name || form.code }, ...watchlist].slice(0, 30);
@@ -144,6 +188,11 @@ export default function ConditionOrderTool() {
   async function copyResult() {
     if (!copyText) return;
     await navigator.clipboard.writeText(copyText);
+    track("copy", {
+      asset: assetType,
+      code: form.code || undefined,
+      name: form.name.slice(0, 20) || undefined,
+    });
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
   }
@@ -173,13 +222,19 @@ export default function ConditionOrderTool() {
           <div className="grid grid-cols-2 rounded-md border border-line bg-rice p-1 text-sm">
             <button
               className={`rounded px-3 py-2 font-semibold ${assetType === "etf" ? "bg-leaf text-white" : ""}`}
-              onClick={() => setAssetType("etf")}
+              onClick={() => {
+                setAssetType("etf");
+                track("asset_switch", { asset: "etf" });
+              }}
             >
               ETF
             </button>
             <button
               className={`rounded px-3 py-2 font-semibold ${assetType === "stock" ? "bg-leaf text-white" : ""}`}
-              onClick={() => setAssetType("stock")}
+              onClick={() => {
+                setAssetType("stock");
+                track("asset_switch", { asset: "stock" });
+              }}
             >
               股票
             </button>
