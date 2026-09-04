@@ -92,15 +92,25 @@ export default function ConditionOrderTool() {
   }, []);
 
   // 埋点：搜索（800ms 防抖，连续相同关键词只记一次）
+  // 降噪：①IME 拼音组词期间不上报 ②过滤拼音碎片（纯字母数字且含空格）
+  //       ③长度 <2 的拉丁词不上报 ④点选结果后的自动回填由 selectQuote 置位去重
   const lastSearchKey = useRef("");
+  const composingRef = useRef(false);
   useEffect(() => {
     const keyword = query.trim();
-    if (keyword.length < 1) return;
+    if (keyword.length < 1 || composingRef.current) return;
+    // 纯 ASCII 且含空格 → 输入法拼音中间态（如 "si wei"）
+    const isPinyinFragment = /^[a-z0-9\s]+$/i.test(keyword) && keyword.includes(" ");
+    // 拉丁/数字词至少 2 个字符（过滤 "5" 这类单字符）；中文 1 个起即可
+    const tooShort = /^[a-z0-9]+$/i.test(keyword) && keyword.length < 2;
+    if (isPinyinFragment || tooShort) return;
     const key = `${assetType}:${keyword.toLowerCase().slice(0, 24)}`;
     if (key === lastSearchKey.current) return;
     lastSearchKey.current = key;
     const timer = setTimeout(() => {
-      track("search", { asset: assetType, term: keyword.slice(0, 24) });
+      if (!composingRef.current) {
+        track("search", { asset: assetType, term: keyword.slice(0, 24) });
+      }
     }, 800);
     return () => clearTimeout(timer);
   }, [query, assetType]);
@@ -153,6 +163,9 @@ export default function ConditionOrderTool() {
 
   function selectQuote(q: QuoteSnapshot) {
     track("select_quote", { asset: assetType, code: q.code, name: q.name.slice(0, 20) });
+    // 回填的"代码 名称"不是用户搜索词：预置去重键，阻止搜索埋点把它记为 term
+    const filled = `${q.code} ${q.name}`;
+    lastSearchKey.current = `${assetType}:${filled.toLowerCase().slice(0, 24)}`;
     setForm({
       code: q.code,
       name: q.name,
@@ -254,6 +267,12 @@ export default function ConditionOrderTool() {
           className="focus-ring mt-2 w-full rounded-md border border-line px-3 py-3"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onCompositionStart={() => {
+            composingRef.current = true;
+          }}
+          onCompositionEnd={() => {
+            composingRef.current = false;
+          }}
           placeholder="例如 512480 / 半导体"
         />
 

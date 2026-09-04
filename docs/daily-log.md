@@ -521,3 +521,28 @@ Cloudflare Pages 是纯静态托管，D5 原方案"Astro endpoint 写 public/dat
 - `jiucaiquan.md` 在公开仓库历史中含 GitHub 邮箱+密码（`China2us@`）：需轮换密码、开启 2FA；Agnes `sk-` key 仅在本地未提交版本，不入库。
 
 （deepseek-v4-pro 签署 · 2026-09-03）
+
+---
+
+## 2026-09-04 周五：D5 埋点上线验证 + 搜索噪音修复
+
+### D1 + Pages Functions 绑定完成（线上实测通过）
+
+- D1 库 `jcq-telemetry` 建表（events + 3 索引）、Pages 绑定 `DB`、变量 `REPORT_KEY`、Retry deployment 全部完成。
+- 线上验证：真实操作（搜索/选择/计算/加自选/切 tab）均落库，报表接口正确 KEY 返回 200、错误 KEY 返回 403。
+- 配置手册沉淀到 [telemetry-setup.md](./telemetry-setup.md)。
+- 踩坑记录：D1 Console 粘贴含 `--` 注释的 SQL 被压平成一行后整体被注释，报 `Requests without any query are not supported`；手册已提供无注释版 SQL。
+
+### 首日数据质量审计发现并修复搜索埋点噪音
+
+线上 topTerms 出现三类非真实搜索词：
+1. IME 拼音中间态（`si wei`、`s w t x`）——拼音组词停顿超过防抖窗即上报
+2. 点选结果后的自动回填（`sz002405 四维图新`）被当成搜索词
+3. 无意义单字符（`5`）
+
+修复（ConditionOrderTool.tsx）：
+- 搜索框监听 `compositionstart/end`，组词期间与定时器触发时双重拦截
+- 纯 ASCII 且含空格判定为拼音碎片丢弃；拉丁词长度 <2 不上报（中文单字保留）
+- `selectQuote` 回填时预置去重键，回填文本不再产生 search 事件
+
+（deepseek-v4-pro 签署 · 2026-09-04）
