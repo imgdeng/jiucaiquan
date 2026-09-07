@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import StageLeaderboard from "../components/StageLeaderboard";
 ---
 <BaseLayout title="韭菜圈 | A 股条件单工具箱">
   <section class="mx-auto grid max-w-6xl gap-8 px-4 py-12 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
@@ -33,6 +34,18 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           <p class="mt-1 text-xl font-bold">回测功能即将上线</p>
         </div>
       </div>
+    </div>
+  </section>
+  <section class="mx-auto max-w-6xl px-4 pb-6">
+    <div class="mb-4 flex items-end justify-between gap-4">
+      <div>
+        <p class="text-sm font-semibold text-leaf">每日更新</p>
+        <h2 class="mt-1 text-2xl font-bold md:text-3xl">阶段排行榜</h2>
+        <p class="mt-2 text-sm leading-6 text-stone-600">个股、ETF、板块，近 1 周到今年来涨跌幅一目了然，快速看清市场主线。</p>
+      </div>
+    </div>
+    <div class="mx-auto max-w-2xl">
+      <StageLeaderboard client:load />
     </div>
   </section>
   <section class="bg-white/55">

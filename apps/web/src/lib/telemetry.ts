@@ -10,7 +10,9 @@ export type TrackEvent =
   | "copy"
   | "asset_switch"
   | "watch_add"
-  | "watch_remove";
+  | "watch_remove"
+  | "leaderboard_view"
+  | "leaderboard_switch";
 
 export type TrackPayload = {
   asset?: "etf" | "stock";

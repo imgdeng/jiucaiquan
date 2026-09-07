@@ -25,6 +25,8 @@ const EVENTS = new Set([
   "asset_switch",
   "watch_add",
   "watch_remove",
+  "leaderboard_view",
+  "leaderboard_switch",
 ]);
 const ASSETS = new Set(["etf", "stock"]);
 const MAX_BODY_BYTES = 2048;

@@ -37,8 +37,11 @@ jobs:
         env:
           JCQ_SOURCE_DIR: ${{ github.workspace }}
 
+      - name: Build stage leaderboard
+        run: python services/market-data/build_leaderboard.py
+
       - name: Commit updated data
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: update market data snapshots"
+          commit_message: "chore: update market data snapshots and leaderboard"
           file_pattern: apps/web/public/data/*.json apps/web/public/data/archive/*/*.json
