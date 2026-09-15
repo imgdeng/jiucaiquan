@@ -1,9 +1,7 @@
 {
-  "generatedAt": "2026-09-15T18:25:04+08:00",
-  "lastSuccessAt": "2026-09-15T18:25:04+08:00",
-  "stockCount": 0,
+  "generatedAt": "2026-09-15T20:01:16+08:00",
+  "lastSuccessAt": "2026-09-15T20:01:16+08:00",
+  "stockCount": 5547,
   "etfCount": 1663,
-  "errors": [
-    "stock: live fetch failed: Can not decode value starting with character '<'"
-  ]
+  "errors": []
 }
