@@ -1,10 +1,7 @@
 {
-  "generatedAt": "2026-09-17T14:42:48+08:00",
-  "lastSuccessAt": null,
-  "stockCount": 0,
-  "etfCount": 0,
-  "errors": [
-    "stock: live fetch failed: HTTPConnectionPool(host='vip.stock.finance.sina.com.cn', port=80): Read timed out. (read timeout=15)",
-    "etf: live fetch failed: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))"
-  ]
+  "generatedAt": "2026-09-17T15:59:27+08:00",
+  "lastSuccessAt": "2026-09-17T15:59:27+08:00",
+  "stockCount": 5552,
+  "etfCount": 1670,
+  "errors": []
 }
