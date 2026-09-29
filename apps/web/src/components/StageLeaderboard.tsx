@@ -195,7 +195,7 @@ export default function StageLeaderboard() {
                 aria-selected={tab === t.key}
                 onClick={() => switchTab(t.key)}
                 className={cx(
-                  "rounded px-4 py-1.5 text-sm font-semibold transition-colors",
+                  "inline-flex min-h-[44px] items-center rounded px-4 text-sm font-semibold transition-colors",
                   tab === t.key ? "bg-leaf text-white" : "text-stone-600 hover:text-leaf",
                 )}
               >
@@ -213,7 +213,7 @@ export default function StageLeaderboard() {
                 aria-pressed={dir === d.key}
                 onClick={() => switchDir(d.key)}
                 className={cx(
-                  "rounded px-3 py-1.5 text-sm font-semibold transition-colors",
+                  "inline-flex min-h-[44px] items-center rounded px-3 text-sm font-semibold transition-colors",
                   dir === d.key
                     ? d.key === "up"
                       ? "bg-red-600 text-white"
@@ -233,7 +233,7 @@ export default function StageLeaderboard() {
               aria-pressed={range === r.key}
               onClick={() => switchRange(r.key)}
               className={cx(
-                "rounded-full border px-3.5 py-1 text-sm transition-colors",
+                "inline-flex min-h-[44px] items-center rounded-full border px-3.5 text-sm transition-colors",
                 range === r.key
                   ? "border-leaf bg-rice font-semibold text-leaf"
                   : "border-line bg-white text-stone-600 hover:border-leaf",
@@ -261,7 +261,7 @@ export default function StageLeaderboard() {
         {data &&
           tab !== "sector" &&
           (rows as { row: RankRow; ret: number }[]).map(({ row, ret }, i) => (
-            <li key={row.code} className="flex items-center gap-3 px-5 py-2.5">
+            <li key={row.code} className="flex min-h-[44px] items-center gap-3 px-5 py-2.5">
               <span
                 className={cx(
                   "w-6 shrink-0 text-center text-sm font-bold",
@@ -285,7 +285,7 @@ export default function StageLeaderboard() {
         {data &&
           tab === "sector" &&
           (rows as { sector: SectorRow; ret: number; repRet: number | null }[]).map(({ sector, ret, repRet }, i) => (
-            <li key={sector.name} className="flex items-center gap-3 px-5 py-2.5">
+            <li key={sector.name} className="flex min-h-[44px] items-center gap-3 px-5 py-2.5">
               <span
                 className={cx(
                   "w-6 shrink-0 text-center text-sm font-bold",

@@ -29,6 +29,8 @@ type DataStatus = {
 
 type WatchItem = { code: string; name: string };
 
+type TopSearches = { terms: string[]; since: string; days: number };
+
 function toNumber(value: string): number {
   if (!value || value.trim() === "") return NaN;
   const parsed = Number(value);
@@ -60,6 +62,7 @@ export default function ConditionOrderTool() {
     close: "",
   });
   const [copied, setCopied] = useState(false);
+  const [hotTerms, setHotTerms] = useState<string[] | null>(null);
 
   const [watchlist, setWatchlist] = useState<WatchItem[]>(() => {
     if (typeof localStorage === "undefined") return [];
@@ -79,6 +82,13 @@ export default function ConditionOrderTool() {
       setEtfQuotes(etf || []);
       setStockQuotes(stock || []);
       setStatus(st);
+    });
+  }, []);
+
+  // 热搜词：进入计算器页拉取一次 Top5（us-102），无数据时展示占位文案
+  useEffect(() => {
+    loadJson<TopSearches>("/api/top-searches").then((data) => {
+      setHotTerms(data?.terms?.length ? data.terms.slice(0, 5) : []);
     });
   }, []);
 
@@ -234,7 +244,7 @@ export default function ConditionOrderTool() {
           </div>
           <div className="grid grid-cols-2 rounded-md border border-line bg-rice p-1 text-sm">
             <button
-              className={`rounded px-3 py-2 font-semibold ${assetType === "etf" ? "bg-leaf text-white" : ""}`}
+              className={`inline-flex min-h-[44px] items-center justify-center rounded px-3 font-semibold ${assetType === "etf" ? "bg-leaf text-white" : ""}`}
               onClick={() => {
                 setAssetType("etf");
                 track("asset_switch", { asset: "etf" });
@@ -243,7 +253,7 @@ export default function ConditionOrderTool() {
               ETF
             </button>
             <button
-              className={`rounded px-3 py-2 font-semibold ${assetType === "stock" ? "bg-leaf text-white" : ""}`}
+              className={`inline-flex min-h-[44px] items-center justify-center rounded px-3 font-semibold ${assetType === "stock" ? "bg-leaf text-white" : ""}`}
               onClick={() => {
                 setAssetType("stock");
                 track("asset_switch", { asset: "stock" });
@@ -275,6 +285,31 @@ export default function ConditionOrderTool() {
           }}
           placeholder="例如 512480 / 半导体"
         />
+
+        {hotTerms !== null && (
+          <div className="mt-3">
+            <p className="text-sm font-semibold text-stone-600">大家都在搜</p>
+            {hotTerms.length ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {hotTerms.map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    aria-label={`搜索 ${term}`}
+                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-line bg-rice px-3 text-sm hover:border-leaf"
+                    onClick={() => setQuery(term)}
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-stone-500">
+                还没有人搜过，来试试搜索 ETF 代码或名称
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="mt-4 max-h-80 overflow-auto rounded-md border border-line">
           {matches.length ? (
