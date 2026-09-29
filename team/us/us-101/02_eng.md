@@ -38,9 +38,9 @@ cd apps/web && npm run build
 
 ## 部署
 
-- 代码提交：`38da614` `[工程马] feat(us-101): 全站页脚添加用户反馈入口`
+- 代码提交：`8a11886` `[工程马] feat(us-101): 全站页脚添加用户反馈入口`
 - 部署：Cloudflare Pages 自动部署 ✅（git push 触发，与 `docs/roadmap.md` §10.2 流程一致）
-- 上线验证：jihuo 后于 `jiucaiquan.com` 首页与 `/tools/condition-order` 页脚点击「反馈」可跳转飞书表单
+- 上线验证：push 后于 `jiucaiquan.com` 首页与 `/tools/condition-order` 页脚点击「反馈」可跳转飞书表单
 
 ## 遗留问题
 
