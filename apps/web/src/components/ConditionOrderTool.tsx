@@ -7,6 +7,7 @@ import {
   validateOHLC,
 } from "../lib/strategies/condition-order";
 import { track } from "../lib/telemetry";
+import { normalizeCode, classifyAsset, buildEtfSet } from "../lib/symbol";
 
 type QuoteSnapshot = {
   code: string;
@@ -63,6 +64,9 @@ export default function ConditionOrderTool() {
   });
   const [copied, setCopied] = useState(false);
   const [hotTerms, setHotTerms] = useState<string[] | null>(null);
+
+  // us-104：ETF 白名单（归一化后 6 位码），用于按标的属性判定 asset，而非 toggle 启发式
+  const etfSet = useMemo(() => buildEtfSet(etfQuotes.map((q) => q.code)), [etfQuotes]);
 
   const [watchlist, setWatchlist] = useState<WatchItem[]>(() => {
     if (typeof localStorage === "undefined") return [];
@@ -158,21 +162,28 @@ export default function ConditionOrderTool() {
   const copyText = result ? buildCopyText(form.code, form.name, result) : "";
 
   // 埋点：有效计算结果（同一标的+tab 只记一次；手动输入按 manual 归并）
+  // us-104：code 归一化（sh600519/600519 同一标的只记一次），asset 按 ETF 白名单判定
   const lastCalcKey = useRef("");
   useEffect(() => {
     if (!result) return;
-    const key = `${assetType}:${form.code || "manual"}`;
+    const nc = normalizeCode(form.code);
+    const key = nc || "manual";
     if (key === lastCalcKey.current) return;
     lastCalcKey.current = key;
     track("calculate", {
-      asset: assetType,
-      code: form.code || undefined,
+      asset: classifyAsset(form.code, etfSet) ?? assetType,
+      code: nc || undefined,
       name: form.name.slice(0, 20) || undefined,
     });
-  }, [result, assetType, form.code, form.name]);
+  }, [result, assetType, form.code, form.name, etfSet]);
 
   function selectQuote(q: QuoteSnapshot) {
-    track("select_quote", { asset: assetType, code: q.code, name: q.name.slice(0, 20) });
+    // us-104：asset 按白名单判定、code 归一化，避免股票被记为 etf 与同一标的多 code
+    track("select_quote", {
+      asset: classifyAsset(q.code, etfSet) ?? assetType,
+      code: normalizeCode(q.code) || undefined,
+      name: q.name.slice(0, 20),
+    });
     // 回填的"代码 名称"不是用户搜索词：预置去重键，阻止搜索埋点把它记为 term
     const filled = `${q.code} ${q.name}`;
     lastSearchKey.current = `${assetType}:${filled.toLowerCase().slice(0, 24)}`;
@@ -195,8 +206,8 @@ export default function ConditionOrderTool() {
     if (!form.code) return;
     const exists = watchlist.some((w) => w.code === form.code);
     track(exists ? "watch_remove" : "watch_add", {
-      asset: assetType,
-      code: form.code,
+      asset: classifyAsset(form.code, etfSet) ?? assetType,
+      code: normalizeCode(form.code) || undefined,
       name: form.name.slice(0, 20) || undefined,
     });
     const next = exists
@@ -212,8 +223,8 @@ export default function ConditionOrderTool() {
     if (!copyText) return;
     await navigator.clipboard.writeText(copyText);
     track("copy", {
-      asset: assetType,
-      code: form.code || undefined,
+      asset: classifyAsset(form.code, etfSet) ?? assetType,
+      code: normalizeCode(form.code) || undefined,
       name: form.name.slice(0, 20) || undefined,
     });
     setCopied(true);

@@ -2,6 +2,8 @@
 // 接收前端匿名埋点，字段白名单收敛后写入 Cloudflare D1。
 // 未绑定 D1（env.DB 不存在）时静默返回 204，保证站点在未配置阶段也不受影响。
 
+import { normalizeCode } from "../_lib/symbol";
+
 interface D1Statement {
   bind(...values: unknown[]): { run(): Promise<unknown> };
 }
@@ -38,12 +40,6 @@ function cleanText(value: unknown, max: number): string | null {
     .trim()
     .slice(0, max);
   return v || null;
-}
-
-function cleanCode(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const v = value.trim().slice(0, 16);
-  return /^[A-Za-z0-9._-]{1,16}$/.test(v) ? v : null;
 }
 
 function cleanSid(value: unknown): string | null {
@@ -83,7 +79,8 @@ export async function onRequestPost({ request, env }: FunctionContext): Promise<
         cstDay(ts),
         event,
         asset,
-        cleanCode(data.code),
+        // us-104：入库前归一化 code，sh600519/600519 统一为 600519；非法码存 NULL
+        normalizeCode(data.code),
         cleanText(data.name, 20),
         cleanText(data.term, 24),
         cleanSid(data.sid),
