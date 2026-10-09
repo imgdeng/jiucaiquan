@@ -50,8 +50,13 @@ node --experimental-strip-types tests/test-symbol.ts
 ## 部署
 
 - 代码提交：`7a6ecb3` `[工程马] feat(us-104): 标的归一化修复 + 回归用例`
-- 部署：Cloudflare Pages 自动部署（git push 触发）
-- 上线验证（待 push 后）：`/api/report?key=...&days=30` 的 `topCodes` 中贵州茅台应合并为单行 `code=600519 asset=stock`；`topCodesNote` 字段存在；新埋点写入 D1 后 `code` 列均为不带前缀 6 位码。
+- 工程记录：`f656b30` `[工程马] docs(us-104): 工程记录 02_eng.md`
+- 部署：Cloudflare Pages 自动部署 ✅（git push `5fea39f..f656b30` fast-forward 触发）
+- 上线验证：
+  - `curl /api/report`（无 key）→ HTTP 403（函数已部署、key 鉴权生效）
+  - `curl /api/top-searches` → HTTP 200 `{"terms":[],"since":"2026-10-03","days":7}`
+  - `curl /` → HTTP 200；`curl /tools/condition-order/` → HTTP 200（计算器页）
+  - 注：`topCodes` 实际聚合口径（茅台 `code=600519 asset=stock`）需带 REPORT_KEY 验证，key 为环境变量未暴露，逻辑已由本地 tsc + 回归测试覆盖；新埋点入库后 `code` 列将为不带前缀 6 位码。
 
 ## 遗留问题
 
