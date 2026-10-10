@@ -8,6 +8,8 @@ export type TrackEvent =
   | "select_quote"
   | "calculate"
   | "copy"
+  | "copy_click"
+  | "copy_fail"
   | "asset_switch"
   | "watch_add"
   | "watch_remove"
@@ -19,6 +21,8 @@ export type TrackPayload = {
   code?: string;
   name?: string;
   term?: string;
+  /** copy_fail 失败原因分类（not_allowed/no_user_gesture/unknown） */
+  reason?: string;
 };
 
 const ENDPOINT = "/api/track";

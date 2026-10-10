@@ -24,6 +24,8 @@ const EVENTS = new Set([
   "select_quote",
   "calculate",
   "copy",
+  "copy_click",
+  "copy_fail",
   "asset_switch",
   "watch_add",
   "watch_remove",

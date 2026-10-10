@@ -30,7 +30,8 @@ type DataStatus = {
 
 type WatchItem = { code: string; name: string };
 
-type TopSearches = { terms: string[]; since: string; days: number };
+type TopItem = { code: string; name: string; asset?: string };
+type TopItems = { items: TopItem[]; since: string; days: number; source: string };
 
 function toNumber(value: string): number {
   if (!value || value.trim() === "") return NaN;
@@ -48,6 +49,37 @@ async function loadJson<T>(path: string): Promise<T | null> {
   }
 }
 
+/** us-105：navigator.clipboard 不可用时的 execCommand 兜底（同步 API，选中隐藏 textarea 复制） */
+function execCommandFallback(text: string): boolean {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "0";
+    ta.style.left = "-9999px";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+/** us-105：将 clipboard 异常归类为可读 reason（not_allowed/no_user_gesture/unknown） */
+function classifyCopyError(err: unknown): string {
+  if (err && typeof err === "object") {
+    const name = (err as { name?: string }).name;
+    if (name === "NotAllowedError") return "not_allowed";
+    if (name === "SecurityError" || name === "AbortError") return "no_user_gesture";
+  }
+  return "unknown";
+}
+
 export default function ConditionOrderTool() {
   const [assetType, setAssetType] = useState<AssetType>("etf");
   const [etfQuotes, setEtfQuotes] = useState<QuoteSnapshot[]>([]);
@@ -63,7 +95,8 @@ export default function ConditionOrderTool() {
     close: "",
   });
   const [copied, setCopied] = useState(false);
-  const [hotTerms, setHotTerms] = useState<string[] | null>(null);
+  const [copyFailed, setCopyFailed] = useState(false);
+  const [hotItems, setHotItems] = useState<TopItem[] | null>(null);
 
   // us-104：ETF 白名单（归一化后 6 位码），用于按标的属性判定 asset，而非 toggle 启发式
   const etfSet = useMemo(() => buildEtfSet(etfQuotes.map((q) => q.code)), [etfQuotes]);
@@ -89,10 +122,10 @@ export default function ConditionOrderTool() {
     });
   }, []);
 
-  // 热搜词：进入计算器页拉取一次 Top5（us-102），无数据时展示占位文案
+  // 热门标的：进入计算器页拉取一次近 30 天 calculate Top5（us-105，原 us-102 热搜词切数据源）
   useEffect(() => {
-    loadJson<TopSearches>("/api/top-searches").then((data) => {
-      setHotTerms(data?.terms?.length ? data.terms.slice(0, 5) : []);
+    loadJson<TopItems>("/api/top-items").then((data) => {
+      setHotItems(data?.items?.length ? data.items.slice(0, 5) : []);
     });
   }, []);
 
@@ -221,14 +254,34 @@ export default function ConditionOrderTool() {
 
   async function copyResult() {
     if (!copyText) return;
-    await navigator.clipboard.writeText(copyText);
-    track("copy", {
+    const payload = {
       asset: classifyAsset(form.code, etfSet) ?? assetType,
       code: normalizeCode(form.code) || undefined,
       name: form.name.slice(0, 20) || undefined,
-    });
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1600);
+    };
+    // us-105：三段埋点——点击即记 copy_click；成功记 copy；失败记 copy_fail
+    track("copy_click", payload);
+    try {
+      await navigator.clipboard.writeText(copyText);
+      track("copy", payload);
+      setCopied(true);
+      setCopyFailed(false);
+    } catch (err) {
+      // fallback：execCommand 兜底（非 HTTPS / 权限被拒 / 无用户手势场景）
+      if (execCommandFallback(copyText)) {
+        track("copy", payload);
+        setCopied(true);
+        setCopyFailed(false);
+      } else {
+        track("copy_fail", { ...payload, reason: classifyCopyError(err) });
+        setCopied(false);
+        setCopyFailed(true);
+      }
+    }
+    setTimeout(() => {
+      setCopied(false);
+      setCopyFailed(false);
+    }, 1600);
   }
 
   const dataCount = assetType === "etf" ? etfQuotes.length : stockQuotes.length;
@@ -297,26 +350,26 @@ export default function ConditionOrderTool() {
           placeholder="例如 512480 / 半导体"
         />
 
-        {hotTerms !== null && (
+        {hotItems !== null && (
           <div className="mt-3">
-            <p className="text-sm font-semibold text-stone-600">大家都在搜</p>
-            {hotTerms.length ? (
+            <p className="text-sm font-semibold text-stone-600">热门标的</p>
+            {hotItems.length ? (
               <div className="mt-2 flex flex-wrap gap-2">
-                {hotTerms.map((term) => (
+                {hotItems.map((it) => (
                   <button
-                    key={term}
+                    key={it.code || it.name}
                     type="button"
-                    aria-label={`搜索 ${term}`}
+                    aria-label={`计算 ${it.name}`}
                     className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-line bg-rice px-3 text-sm hover:border-leaf"
-                    onClick={() => setQuery(term)}
+                    onClick={() => setQuery(it.name)}
                   >
-                    {term}
+                    {it.name || it.code}
                   </button>
                 ))}
               </div>
             ) : (
               <p className="mt-2 text-sm text-stone-500">
-                还没有人搜过，来试试搜索 ETF 代码或名称
+                暂无热门标的
               </p>
             )}
           </div>
@@ -412,10 +465,16 @@ export default function ConditionOrderTool() {
           )}
           <button
             disabled={!result}
-            className="mt-5 rounded-md bg-ink px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+            className={`mt-5 rounded-md px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40 ${
+              copyFailed
+                ? "bg-amber-600 hover:bg-amber-700"
+                : copied
+                  ? "bg-leaf hover:bg-emerald-700"
+                  : "bg-ink"
+            }`}
             onClick={copyResult}
           >
-            {copied ? "已复制到剪贴板" : "复制条件单文案"}
+            {copyFailed ? "复制失败，请手动选中" : copied ? "已复制到剪贴板" : "复制条件单文案"}
           </button>
         </div>
 

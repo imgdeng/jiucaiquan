@@ -99,13 +99,15 @@ export function buildCopyText(
   name: string,
   result: ConditionOrderResult,
 ): string {
-  const { buyPrice, sellPrice, smallWatchPrice, bigWatchPrice, digits } = result;
+  const { buyPrice, sellPrice, smallWatchPrice, bigWatchPrice, basePrice, digits } = result;
   const lines = [
     `${name || code}(${code}) 次日条件单参考：`,
-    `· 低吸价：${formatPrice(buyPrice, digits)}`,
-    `· 高抛价：${formatPrice(sellPrice, digits)}`,
+    `· 买入（低吸）：${formatPrice(buyPrice, digits)}`,
+    `· 卖出（高抛）：${formatPrice(sellPrice, digits)}`,
     `· 小观察价：${formatPrice(smallWatchPrice, digits)}`,
     `· 大观察价：${formatPrice(bigWatchPrice, digits)}`,
+    `· 基准价：${formatPrice(basePrice, digits)}`,
+    `券商App条件单以"价格≥/≤"设置，数量自行决定。`,
     `（仅供学习研究，不构成投资建议，独立判断）`,
   ];
   return lines.join("\n");
