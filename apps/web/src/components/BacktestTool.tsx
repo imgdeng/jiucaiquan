@@ -303,10 +303,11 @@ export default function BacktestTool() {
           disabled={controlsDisabled}
           onChange={() => {}}
         >
-          <option value="pivot-condition-order">
-            Pivot 条件单（次日低吸/高抛，最长持有 5 个交易日，到期按收盘平仓）
-          </option>
+          <option value="pivot-condition-order">Pivot 条件单</option>
         </select>
+        <p className="mt-2 text-xs leading-5 text-stone-600">
+          规则：次日低吸/高抛；最长持有 5 个交易日，到期按收盘平仓。
+        </p>
 
         <p className="mt-5 text-sm font-semibold">区间</p>
         <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3" role="group" aria-label="回测区间">
