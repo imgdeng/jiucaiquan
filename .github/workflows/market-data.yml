@@ -40,8 +40,17 @@ jobs:
       - name: Build stage leaderboard
         run: python services/market-data/build_leaderboard.py
 
+      - name: Build backtest static data
+        id: build_backtest
+        continue-on-error: true
+        run: python services/market-data/build_backtest.py
+
+      - name: Report backtest build failure
+        if: steps.build_backtest.outcome == 'failure'
+        run: echo "::warning::Backtest build failed; market data commit will continue."
+
       - name: Commit updated data
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: update market data snapshots and leaderboard"
-          file_pattern: apps/web/public/data/*.json apps/web/public/data/archive/*/*.json
+          file_pattern: apps/web/public/data/*.json apps/web/public/data/archive/*/*.json apps/web/public/data/backtest/index.json apps/web/public/data/backtest/summary/*.json

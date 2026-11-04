@@ -49,6 +49,8 @@ WINDOWS: tuple[tuple[str, str, int, int], ...] = (
     ("12m", "近 12 个月", 240, 240),
 )
 UNAVAILABLE_REASON = "数据积累中"
+# 货币/现金类 ETF 不得入池（名称命中即排除，并在构建末尾做泄漏断言）
+MONEY_ETF_KEYWORDS = ("货币", "日利", "添利", "现金")
 
 # 策略参数冻结于 01_req.md §4：rangeMultiplier=1 / weighted base / 最长持有 5 个交易日
 STRATEGY_META = {
@@ -161,11 +163,14 @@ def panel_by_norm_code(panel: dict[str, dict]) -> dict[str, tuple[str, dict]]:
 
 
 def build_pool(evidence: dict, leaderboard: dict) -> list[dict]:
-    """固定标的池：直接代入 P-1 证据池（ETF 30 + 个股 30），并按末日成交额降序。
+    """固定标的池：代入 P-1 证据池，显式排除货币/现金类 ETF，并按末日成交额降序。
 
     P-1 已完成成交额头部筛选、异常标的剔除与“不足 60 日”剔除；这里只做代入与校验，
     不重新推导，避免与书面结论产生第二套口径。
     """
+    if not MONEY_ETF_KEYWORDS:
+        raise SystemExit("货币 ETF 排除关键词缺失，拒绝构建")
+
     pool_symbols = evidence.get("pool", {}).get("symbols", [])
     excluded = {normalize_code(item.get("code")) for item in evidence.get("excluded", [])}
 
@@ -185,13 +190,17 @@ def build_pool(evidence: dict, leaderboard: dict) -> list[dict]:
         if int(symbol.get("days") or 0) < 60:
             raise SystemExit(f"P-1 标的不足 60 个交易日，不得入池：{code} ({symbol.get('days')} 日)")
         row = rows_by_code.get(code)
-        amount = int(round(float((row or {}).get("amount") or 0)))
+        name = str(symbol.get("name") or (row or {}).get("name") or code).strip()
+        asset = str(symbol.get("kind") or "").strip()
+        if asset == "etf" and any(keyword in name for keyword in MONEY_ETF_KEYWORDS):
+            print(f"[backtest] 排除货币/现金类 ETF：{code} {name}", file=sys.stderr)
+            continue
         pool.append(
             {
                 "code": code,
-                "name": str(symbol.get("name") or (row or {}).get("name") or code).strip(),
-                "asset": str(symbol.get("kind") or "").strip(),
-                "amount": amount,
+                "name": name,
+                "asset": asset,
+                "amount": int(round(float((row or {}).get("amount") or 0))),
                 "summary": f"summary/{code}.json",
             }
         )
@@ -213,6 +222,12 @@ def build_pool(evidence: dict, leaderboard: dict) -> list[dict]:
         item = next((x for x in pool if x["code"] == forced_code), None)
         if not item or item["asset"] != forced_asset:
             raise SystemExit(f"P-1 标的池缺少必备标的：{forced_code} ({forced_asset})")
+
+    # 构建断言：货币/现金类 ETF 命中即退出
+    leaked = [item for item in pool if item["asset"] == "etf" and any(k in item["name"] for k in MONEY_ETF_KEYWORDS)]
+    if leaked:
+        detail = ", ".join(f"{item['code']} {item['name']}" for item in leaked)
+        raise SystemExit(f"货币/现金类 ETF 仍在池内：{detail}")
     return pool
 
 
@@ -375,9 +390,9 @@ def simulate_window(series: dict[str, dict], dates: list[str], window: dict, ass
             i += 1
             continue
 
-        exit_idx = i + hold - 1  # 默认持有满 5 个交易日按收盘价结算
+        exit_idx = i + hold  # 默认持有满 5 个交易日按第 5 日收盘价结算
         exit_price = series[dates[exit_idx]]["close"]
-        for j in range(i + 1, i + hold):
+        for j in range(i + 1, i + hold + 1):
             if series[dates[j]]["high"] >= sell:
                 exit_idx = j
                 exit_price = sell
