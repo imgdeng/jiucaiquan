@@ -101,6 +101,34 @@ def price_limit(code: str, name: str, kind: str) -> float:
     return 0.20 if ("科创" in name or "创业" in name) else 0.10
 
 
+def adjust_price_series(
+    dates: list[str],
+    prices: dict[str, float],
+    code: str,
+    name: str,
+    kind: str,
+) -> dict[str, float]:
+    """按涨跌幅上限识别份额折算/除权，并向前复权。
+
+    与 build_panel 内原有逻辑完全一致，抽出供历史日线回补脚本复用。
+    """
+    didx = {d: i for i, d in enumerate(dates)}
+    days = sorted(prices)
+    if not days:
+        return {}
+    lim = price_limit(code, name, kind)
+    factor = 1.0
+    adjusted: dict[str, float] = {days[0]: prices[days[0]]}
+    for i in range(1, len(days)):
+        gap = didx[days[i]] - didx[days[i - 1]]
+        raw_ret = prices[days[i]] / prices[days[i - 1]] - 1
+        if abs(raw_ret) > (1 + lim + TOLERANCE) ** gap - 1:
+            # 份额折算/除权：向前复权
+            factor *= prices[days[i - 1]] / prices[days[i]]
+        adjusted[days[i]] = prices[days[i]] * factor
+    return adjusted
+
+
 def build_panel(dates: list[str], items_by_date: dict[str, list[dict]], kind: str) -> dict[str, dict]:
     """组装 {code: {name, px: {date: 复权价}, amt: {date: 成交额}}}。"""
     panel: dict[str, dict] = {}
@@ -118,20 +146,8 @@ def build_panel(dates: list[str], items_by_date: dict[str, list[dict]], kind: st
             p["amt"][date] = float(amt) if amt else 0.0
             p["name"] = str(it.get("name") or p["name"]).strip()
 
-    didx = {d: i for i, d in enumerate(dates)}
     for code, p in panel.items():
-        days = sorted(p["px"])
-        lim = price_limit(code, p["name"], kind)
-        factor = 1.0
-        adjusted: dict[str, float] = {days[0]: p["px"][days[0]]}
-        for i in range(1, len(days)):
-            gap = didx[days[i]] - didx[days[i - 1]]
-            raw_ret = p["px"][days[i]] / p["px"][days[i - 1]] - 1
-            if abs(raw_ret) > (1 + lim + TOLERANCE) ** gap - 1:
-                # 份额折算/除权：向前复权
-                factor *= p["px"][days[i - 1]] / p["px"][days[i]]
-            adjusted[days[i]] = p["px"][days[i]] * factor
-        p["px"] = adjusted
+        p["px"] = adjust_price_series(dates, p["px"], code, p["name"], kind)
     return panel
 
 

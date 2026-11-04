@@ -1,0 +1,1663 @@
+{
+ "generatedAt": "2026-11-04T13:32:43+08:00",
+ "source": "apps/web/public/data/archive（本地=远程 origin/main 285b486）",
+ "range": {
+  "dataStart": "2026-06-08",
+  "dataEnd": "2026-11-03",
+  "tradingDays": 99,
+  "archiveFolders": 107,
+  "nonTradingSnapshots": [
+   "2026-06-19",
+   "2026-08-29",
+   "2026-09-25",
+   "2026-10-01",
+   "2026-10-02",
+   "2026-10-05",
+   "2026-10-06",
+   "2026-10-07"
+  ],
+  "meets60Days": true,
+  "meets120Days": false,
+  "meets240Days": false
+ },
+ "coverage": {
+  "stockCodes": 5594,
+  "etfCodes": 1719,
+  "stockWith60Days": 5533,
+  "etfWith60Days": 1617,
+  "insufficientCount": 163
+ },
+ "assetClassification": {
+  "stockEtfOverlapCodes": [],
+  "overlapCount": 0,
+  "sh600519InStock": true,
+  "sh600519InEtf": false,
+  "sh510300InEtf": true
+ },
+ "adjustment": {
+  "method": "build_leaderboard.adjust_price_series（涨跌幅上限识别份额折算/除权）",
+  "residualJumpCount": 1,
+  "residualJumpSamples": [
+   {
+    "code": "sz002731",
+    "name": "萃华退",
+    "kind": "stock",
+    "maxDailyRet": 0.12
+   }
+  ],
+  "qfqDriftPp": {
+   "poolMedian": 0.0,
+   "poolMax": 2.96
+  }
+ },
+ "pool": {
+  "rule": "ETF 按末日成交额降序且剔除债券/货币类；个股按末日成交额降序；每类取前 30 只可用标的",
+  "etfCount": 30,
+  "stockCount": 30,
+  "total": 60,
+  "symbols": [
+   {
+    "code": "sh511880",
+    "name": "银华日利ETF",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": 0.42
+   },
+   {
+    "code": "sh588000",
+    "name": "科创50ETF华夏",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -27.81
+   },
+   {
+    "code": "sz159915",
+    "name": "创业板ETF易方达",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -37.21
+   },
+   {
+    "code": "sh510300",
+    "name": "沪深300ETF华泰柏瑞",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -13.65
+   },
+   {
+    "code": "sh513310",
+    "name": "中韩半导体ETF华泰柏瑞",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -30.13
+   },
+   {
+    "code": "sh510050",
+    "name": "上证50ETF华夏",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -0.59
+   },
+   {
+    "code": "sh512100",
+    "name": "中证1000ETF南方",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -22.19
+   },
+   {
+    "code": "sh510500",
+    "name": "中证500ETF南方",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": -1.49,
+    "priceGap": 0.0188,
+    "ret3mQfq": -19.43
+   },
+   {
+    "code": "sh510310",
+    "name": "沪深300ETF易方达",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -13.54
+   },
+   {
+    "code": "sz159919",
+    "name": "沪深300ETF嘉实",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -13.47
+   },
+   {
+    "code": "sh563360",
+    "name": "A500ETF华泰柏瑞",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -16.83
+   },
+   {
+    "code": "sz159338",
+    "name": "中证A500ETF国泰",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -16.73
+   },
+   {
+    "code": "sh513120",
+    "name": "港股创新药ETF广发",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": 12.88
+   },
+   {
+    "code": "sz159352",
+    "name": "A500ETF南方",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -16.8
+   },
+   {
+    "code": "sh510330",
+    "name": "沪深300ETF华夏",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -13.54
+   },
+   {
+    "code": "sh513090",
+    "name": "香港证券ETF易方达",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -5.25
+   },
+   {
+    "code": "sz159361",
+    "name": "A500ETF易方达",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -16.65
+   },
+   {
+    "code": "sh518880",
+    "name": "黄金ETF华安",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -10.77
+   },
+   {
+    "code": "sz159949",
+    "name": "创业板50ETF华安",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -41.68
+   },
+   {
+    "code": "sh588080",
+    "name": "科创50ETF易方达",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -27.91
+   },
+   {
+    "code": "sz159845",
+    "name": "中证1000ETF华夏",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -22.36
+   },
+   {
+    "code": "sh513180",
+    "name": "恒生科技ETF华夏",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -20.23
+   },
+   {
+    "code": "sh512050",
+    "name": "A500ETF华夏",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -16.65
+   },
+   {
+    "code": "sh513130",
+    "name": "恒生科技ETF华泰柏瑞",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -20.1
+   },
+   {
+    "code": "sh512880",
+    "name": "证券ETF国泰",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": 1.5
+   },
+   {
+    "code": "sz159952",
+    "name": "创业板ETF广发",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -37.08
+   },
+   {
+    "code": "sz159792",
+    "name": "港股通互联网ETF富国",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -14.83
+   },
+   {
+    "code": "sh560010",
+    "name": "中证1000ETF广发",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -22.22
+   },
+   {
+    "code": "sh513330",
+    "name": "恒生互联网ETF华夏",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -18.21
+   },
+   {
+    "code": "sh513050",
+    "name": "中概互联网ETF易方达",
+    "kind": "etf",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -12.22
+   },
+   {
+    "code": "sz300308",
+    "name": "中际旭创",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -0.04,
+    "priceGap": 0.0015,
+    "ret3mQfq": -58.38
+   },
+   {
+    "code": "sh688825",
+    "name": "长鑫科技",
+    "kind": "stock",
+    "days": 66,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -20.82
+   },
+   {
+    "code": "sz300750",
+    "name": "宁德时代",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -0.23,
+    "priceGap": 0.004,
+    "ret3mQfq": -36.34
+   },
+   {
+    "code": "sh688256",
+    "name": "寒武纪",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -38.58
+   },
+   {
+    "code": "sz002384",
+    "name": "东山精密",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -58.62
+   },
+   {
+    "code": "sh600519",
+    "name": "贵州茅台",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -2.66,
+    "priceGap": 0.0238,
+    "ret3mQfq": 19.84
+   },
+   {
+    "code": "sh603986",
+    "name": "兆易创新",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -47.22
+   },
+   {
+    "code": "sh600183",
+    "name": "生益科技",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -44.9
+   },
+   {
+    "code": "sh601899",
+    "name": "紫金矿业",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -2.87,
+    "priceGap": 0.0318,
+    "ret3mQfq": 0.73
+   },
+   {
+    "code": "sh688008",
+    "name": "澜起科技",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -0.18,
+    "priceGap": 0.0032,
+    "ret3mQfq": -32.95
+   },
+   {
+    "code": "sz300274",
+    "name": "阳光电源",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -0.23,
+    "priceGap": 0.0076,
+    "ret3mQfq": -48.19
+   },
+   {
+    "code": "sh600036",
+    "name": "招商银行",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -2.96,
+    "priceGap": 0.029,
+    "ret3mQfq": 13.84
+   },
+   {
+    "code": "sh603259",
+    "name": "药明康德",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -0.75,
+    "priceGap": 0.0053,
+    "ret3mQfq": 41.67
+   },
+   {
+    "code": "sz002463",
+    "name": "沪电股份",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -42.96
+   },
+   {
+    "code": "sz300059",
+    "name": "东方财富",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": 6.43
+   },
+   {
+    "code": "sz300476",
+    "name": "胜宏科技",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -61.02
+   },
+   {
+    "code": "sz300223",
+    "name": "君正股份",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -33.34
+   },
+   {
+    "code": "sh600487",
+    "name": "亨通光电",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -0.12,
+    "priceGap": 0.0028,
+    "ret3mQfq": -57.51
+   },
+   {
+    "code": "sh601398",
+    "name": "工商银行",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -2.34,
+    "priceGap": 0.0218,
+    "ret3mQfq": 16.87
+   },
+   {
+    "code": "sz002371",
+    "name": "北方华创",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -0.11,
+    "priceGap": 0.0013,
+    "ret3mQfq": -16.78
+   },
+   {
+    "code": "sh688981",
+    "name": "中芯国际",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -16.25
+   },
+   {
+    "code": "sz300408",
+    "name": "三环集团",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -43.93
+   },
+   {
+    "code": "sh688012",
+    "name": "中微公司",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": 0.0,
+    "priceGap": 0.0,
+    "ret3mQfq": -22.48
+   },
+   {
+    "code": "sh601138",
+    "name": "工业富联",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -0.55,
+    "priceGap": 0.0122,
+    "ret3mQfq": -39.93
+   },
+   {
+    "code": "sh688498",
+    "name": "源杰科技",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -0.03,
+    "priceGap": 0.001,
+    "ret3mQfq": -56.45
+   },
+   {
+    "code": "sh688041",
+    "name": "海光信息",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -0.04,
+    "priceGap": 0.0006,
+    "ret3mQfq": -34.5
+   },
+   {
+    "code": "sz000725",
+    "name": "京东方Ａ",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -0.67,
+    "priceGap": 0.0109,
+    "ret3mQfq": -29.37
+   },
+   {
+    "code": "sz002475",
+    "name": "立讯精密",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -0.26,
+    "priceGap": 0.0043,
+    "ret3mQfq": -31.02
+   },
+   {
+    "code": "sh600030",
+    "name": "中信证券",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -1.68,
+    "priceGap": 0.0164,
+    "ret3mQfq": 4.12
+   },
+   {
+    "code": "sz300413",
+    "name": "芒果超媒",
+    "kind": "stock",
+    "days": 99,
+    "driftPp": -2.81,
+    "priceGap": 0.0185,
+    "ret3mQfq": 74.62
+   }
+  ]
+ },
+ "excluded": [
+  {
+   "code": "sh588170",
+   "name": "科创半导体ETF华夏",
+   "kind": "etf",
+   "driftPp": 0.03,
+   "priceGap": 2.0025,
+   "reason": "价位差200.2%"
+  },
+  {
+   "code": "sh515880",
+   "name": "通信ETF国泰",
+   "kind": "etf",
+   "driftPp": 2.19,
+   "priceGap": 1.0859,
+   "reason": "价位差108.6%"
+  },
+  {
+   "code": "sh588200",
+   "name": "科创芯片ETF嘉实",
+   "kind": "etf",
+   "driftPp": -8.59,
+   "priceGap": 2.0009,
+   "reason": "复权口径偏差-8.59pp"
+  },
+  {
+   "code": "sz159516",
+   "name": "半导体设备ETF国泰",
+   "kind": "etf",
+   "driftPp": 5.59,
+   "priceGap": 1.1492,
+   "reason": "复权口径偏差5.59pp"
+  },
+  {
+   "code": "sz300502",
+   "name": "新易盛",
+   "kind": "stock",
+   "driftPp": 1.59,
+   "priceGap": 0.4686,
+   "reason": "价位差46.9%"
+  },
+  {
+   "code": "sz300394",
+   "name": "天孚通信",
+   "kind": "stock",
+   "driftPp": 1.83,
+   "priceGap": 0.4721,
+   "reason": "价位差47.2%"
+  },
+  {
+   "code": "sh601318",
+   "name": "中国平安",
+   "kind": "stock",
+   "driftPp": -5.51,
+   "priceGap": 0.0539,
+   "reason": "复权口径偏差-5.51pp"
+  },
+  {
+   "code": "sz001309",
+   "name": "德明利",
+   "kind": "stock",
+   "driftPp": -0.91,
+   "priceGap": 0.4066,
+   "reason": "价位差40.7%"
+  },
+  {
+   "code": "sh600900",
+   "name": "长江电力",
+   "kind": "stock",
+   "driftPp": -3.21,
+   "priceGap": 0.0311,
+   "reason": "复权口径偏差-3.21pp"
+  },
+  {
+   "code": "sz002636",
+   "name": "金安国纪",
+   "kind": "stock",
+   "driftPp": -15.89,
+   "priceGap": 0.1736,
+   "reason": "复权口径偏差-15.89pp"
+  }
+ ],
+ "insufficientSymbols": [
+  {
+   "code": "sz000016",
+   "name": "*ST康佳A",
+   "kind": "stock",
+   "days": 58
+  },
+  {
+   "code": "sh600636",
+   "name": "退市国化",
+   "kind": "stock",
+   "days": 9
+  },
+  {
+   "code": "sh600193",
+   "name": "退市创兴",
+   "kind": "stock",
+   "days": 14
+  },
+  {
+   "code": "sh600608",
+   "name": "退市沪科",
+   "kind": "stock",
+   "days": 14
+  },
+  {
+   "code": "sh605081",
+   "name": "退市太和",
+   "kind": "stock",
+   "days": 14
+  },
+  {
+   "code": "sh688287",
+   "name": "退市观典",
+   "kind": "stock",
+   "days": 1
+  },
+  {
+   "code": "sh600421",
+   "name": "退市华嵘",
+   "kind": "stock",
+   "days": 9
+  },
+  {
+   "code": "sh600696",
+   "name": "退市岩石",
+   "kind": "stock",
+   "days": 9
+  },
+  {
+   "code": "sh600599",
+   "name": "退市熊猫",
+   "kind": "stock",
+   "days": 9
+  },
+  {
+   "code": "sz300029",
+   "name": "天龙退",
+   "kind": "stock",
+   "days": 15
+  },
+  {
+   "code": "sz002808",
+   "name": "恒久退",
+   "kind": "stock",
+   "days": 15
+  },
+  {
+   "code": "sz000004",
+   "name": "国华退",
+   "kind": "stock",
+   "days": 15
+  },
+  {
+   "code": "sz002898",
+   "name": "赛隆退",
+   "kind": "stock",
+   "days": 15
+  },
+  {
+   "code": "sz002731",
+   "name": "萃华退",
+   "kind": "stock",
+   "days": 48
+  },
+  {
+   "code": "bj920305",
+   "name": "云创退",
+   "kind": "stock",
+   "days": 15
+  },
+  {
+   "code": "bj920038",
+   "name": "森合高科",
+   "kind": "stock",
+   "days": 59
+  },
+  {
+   "code": "sh603468",
+   "name": "津富士达",
+   "kind": "stock",
+   "days": 58
+  },
+  {
+   "code": "sz301707",
+   "name": "展芯股份",
+   "kind": "stock",
+   "days": 57
+  },
+  {
+   "code": "sz301717",
+   "name": "超纯应材",
+   "kind": "stock",
+   "days": 55
+  },
+  {
+   "code": "sh688828",
+   "name": "国仪公司",
+   "kind": "stock",
+   "days": 55
+  },
+  {
+   "code": "bj920165",
+   "name": "珈凯生物",
+   "kind": "stock",
+   "days": 55
+  },
+  {
+   "code": "bj920138",
+   "name": "杰理科技",
+   "kind": "stock",
+   "days": 54
+  },
+  {
+   "code": "bj920107",
+   "name": "恒兴股份",
+   "kind": "stock",
+   "days": 51
+  },
+  {
+   "code": "sh688826",
+   "name": "频准激光",
+   "kind": "stock",
+   "days": 50
+  },
+  {
+   "code": "sh688836",
+   "name": "宇树科技",
+   "kind": "stock",
+   "days": 49
+  },
+  {
+   "code": "bj920059",
+   "name": "双英集团",
+   "kind": "stock",
+   "days": 49
+  },
+  {
+   "code": "sz301655",
+   "name": "绿控传动",
+   "kind": "stock",
+   "days": 48
+  },
+  {
+   "code": "bj920093",
+   "name": "信胜科技",
+   "kind": "stock",
+   "days": 47
+  },
+  {
+   "code": "sh688835",
+   "name": "高凯技术",
+   "kind": "stock",
+   "days": 45
+  },
+  {
+   "code": "bj920288",
+   "name": "华大海天",
+   "kind": "stock",
+   "days": 42
+  },
+  {
+   "code": "sh601123",
+   "name": "马矿股份",
+   "kind": "stock",
+   "days": 40
+  },
+  {
+   "code": "sz301697",
+   "name": "贝特利",
+   "kind": "stock",
+   "days": 40
+  },
+  {
+   "code": "sz301688",
+   "name": "格林生物",
+   "kind": "stock",
+   "days": 39
+  },
+  {
+   "code": "bj920071",
+   "name": "金钛股份",
+   "kind": "stock",
+   "days": 38
+  },
+  {
+   "code": "bj920289",
+   "name": "华汇智能",
+   "kind": "stock",
+   "days": 37
+  },
+  {
+   "code": "sh603448",
+   "name": "天博智能",
+   "kind": "stock",
+   "days": 36
+  },
+  {
+   "code": "bj920269",
+   "name": "杰锋动力",
+   "kind": "stock",
+   "days": 36
+  },
+  {
+   "code": "sz301699",
+   "name": "洛轴股份",
+   "kind": "stock",
+   "days": 34
+  },
+  {
+   "code": "bj920268",
+   "name": "百迈科",
+   "kind": "stock",
+   "days": 34
+  },
+  {
+   "code": "sz301689",
+   "name": "电科思仪",
+   "kind": "stock",
+   "days": 33
+  },
+  {
+   "code": "sh688801",
+   "name": "燧原科技",
+   "kind": "stock",
+   "days": 32
+  },
+  {
+   "code": "sh688837",
+   "name": "信诺维",
+   "kind": "stock",
+   "days": 29
+  },
+  {
+   "code": "bj920298",
+   "name": "腾信精密",
+   "kind": "stock",
+   "days": 29
+  },
+  {
+   "code": "sh601091",
+   "name": "沈鼓集团",
+   "kind": "stock",
+   "days": 28
+  },
+  {
+   "code": "sz301686",
+   "name": "中塑股份",
+   "kind": "stock",
+   "days": 25
+  },
+  {
+   "code": "bj920229",
+   "name": "世纪数码",
+   "kind": "stock",
+   "days": 25
+  },
+  {
+   "code": "bj920025",
+   "name": "凯达重工",
+   "kind": "stock",
+   "days": 24
+  },
+  {
+   "code": "bj920201",
+   "name": "百瑞吉",
+   "kind": "stock",
+   "days": 23
+  },
+  {
+   "code": "sz301716",
+   "name": "鸿富诚",
+   "kind": "stock",
+   "days": 21
+  },
+  {
+   "code": "bj920202",
+   "name": "安达股份",
+   "kind": "stock",
+   "days": 21
+  },
+  {
+   "code": "sz001246",
+   "name": "力勤资源",
+   "kind": "stock",
+   "days": 20
+  },
+  {
+   "code": "bj920157",
+   "name": "宇特光电",
+   "kind": "stock",
+   "days": 18
+  },
+  {
+   "code": "sz301660",
+   "name": "粤芯半导",
+   "kind": "stock",
+   "days": 16
+  },
+  {
+   "code": "sz301569",
+   "name": "联亚药业",
+   "kind": "stock",
+   "days": 14
+  },
+  {
+   "code": "bj920162",
+   "name": "莫森泰克",
+   "kind": "stock",
+   "days": 14
+  },
+  {
+   "code": "bj920196",
+   "name": "南方乳业",
+   "kind": "stock",
+   "days": 13
+  },
+  {
+   "code": "bj920296",
+   "name": "文峰光电",
+   "kind": "stock",
+   "days": 10
+  },
+  {
+   "code": "sz301718",
+   "name": "通则康威",
+   "kind": "stock",
+   "days": 9
+  },
+  {
+   "code": "bj920285",
+   "name": "远大健科",
+   "kind": "stock",
+   "days": 8
+  },
+  {
+   "code": "bj920306",
+   "name": "天元重工",
+   "kind": "stock",
+   "days": 4
+  },
+  {
+   "code": "sz001381",
+   "name": "N皇冠",
+   "kind": "stock",
+   "days": 1
+  },
+  {
+   "code": "sh560650",
+   "name": "核心50ETF民生加银",
+   "kind": "etf",
+   "days": 16
+  },
+  {
+   "code": "sh561620",
+   "name": "化工ETF华泰柏瑞",
+   "kind": "etf",
+   "days": 59
+  },
+  {
+   "code": "sz158009",
+   "name": "航空航天ETF南方",
+   "kind": "etf",
+   "days": 58
+  },
+  {
+   "code": "sh561890",
+   "name": "A股ETF易方达",
+   "kind": "etf",
+   "days": 57
+  },
+  {
+   "code": "sz158006",
+   "name": "化工ETF博时",
+   "kind": "etf",
+   "days": 57
+  },
+  {
+   "code": "sh561810",
+   "name": "医疗器械ETF华泰柏瑞",
+   "kind": "etf",
+   "days": 57
+  },
+  {
+   "code": "sh512420",
+   "name": "工程机械ETF华安",
+   "kind": "etf",
+   "days": 57
+  },
+  {
+   "code": "sh520740",
+   "name": "港股通互联网ETF华安",
+   "kind": "etf",
+   "days": 56
+  },
+  {
+   "code": "sz159077",
+   "name": "电池ETF鑫元",
+   "kind": "etf",
+   "days": 54
+  },
+  {
+   "code": "sz159058",
+   "name": "证券ETF大成",
+   "kind": "etf",
+   "days": 53
+  },
+  {
+   "code": "sz159083",
+   "name": "红利低波100ETF嘉实",
+   "kind": "etf",
+   "days": 53
+  },
+  {
+   "code": "sz159098",
+   "name": "价值ETF招商",
+   "kind": "etf",
+   "days": 52
+  },
+  {
+   "code": "sh561390",
+   "name": "稀有金属ETF平安",
+   "kind": "etf",
+   "days": 51
+  },
+  {
+   "code": "sz159095",
+   "name": "云计算ETF银华",
+   "kind": "etf",
+   "days": 50
+  },
+  {
+   "code": "sz158003",
+   "name": "港股通医疗ETF嘉实",
+   "kind": "etf",
+   "days": 49
+  },
+  {
+   "code": "sz159073",
+   "name": "粮食ETF汇添富",
+   "kind": "etf",
+   "days": 48
+  },
+  {
+   "code": "sh517230",
+   "name": "云计算ETF永赢",
+   "kind": "etf",
+   "days": 48
+  },
+  {
+   "code": "sz158012",
+   "name": "云计算ETF南方",
+   "kind": "etf",
+   "days": 48
+  },
+  {
+   "code": "sz159082",
+   "name": "化工ETF华夏",
+   "kind": "etf",
+   "days": 47
+  },
+  {
+   "code": "sh589460",
+   "name": "科创200ETF华宝",
+   "kind": "etf",
+   "days": 47
+  },
+  {
+   "code": "sz159043",
+   "name": "食品ETF华安",
+   "kind": "etf",
+   "days": 46
+  },
+  {
+   "code": "sz158005",
+   "name": "工程机械ETF博时",
+   "kind": "etf",
+   "days": 46
+  },
+  {
+   "code": "sh561410",
+   "name": "光伏ETF工银",
+   "kind": "etf",
+   "days": 46
+  },
+  {
+   "code": "sz158000",
+   "name": "港股通金融ETF鹏华",
+   "kind": "etf",
+   "days": 44
+  },
+  {
+   "code": "sz158017",
+   "name": "化工ETF易方达",
+   "kind": "etf",
+   "days": 43
+  },
+  {
+   "code": "sz158001",
+   "name": "价值ETF嘉实",
+   "kind": "etf",
+   "days": 43
+  },
+  {
+   "code": "sz158019",
+   "name": "电池ETF永赢",
+   "kind": "etf",
+   "days": 43
+  },
+  {
+   "code": "sz158010",
+   "name": "医疗ETF嘉实",
+   "kind": "etf",
+   "days": 43
+  },
+  {
+   "code": "sh561730",
+   "name": "A股ETF华夏",
+   "kind": "etf",
+   "days": 42
+  },
+  {
+   "code": "sz159096",
+   "name": "价值ETF华夏",
+   "kind": "etf",
+   "days": 42
+  },
+  {
+   "code": "sz158008",
+   "name": "储能电池ETF华夏",
+   "kind": "etf",
+   "days": 42
+  },
+  {
+   "code": "sh562180",
+   "name": "A500红利低波ETF招商",
+   "kind": "etf",
+   "days": 40
+  },
+  {
+   "code": "sz158027",
+   "name": "工业互联网ETF易方达",
+   "kind": "etf",
+   "days": 39
+  },
+  {
+   "code": "sh561830",
+   "name": "有色ETF国泰海通",
+   "kind": "etf",
+   "days": 39
+  },
+  {
+   "code": "sh561530",
+   "name": "银行ETF银华",
+   "kind": "etf",
+   "days": 38
+  },
+  {
+   "code": "sh526060",
+   "name": "港股通信息技术ETF华泰柏瑞",
+   "kind": "etf",
+   "days": 37
+  },
+  {
+   "code": "sz158011",
+   "name": "创业板软件ETF国泰",
+   "kind": "etf",
+   "days": 37
+  },
+  {
+   "code": "sh589430",
+   "name": "科创芯片设计ETF华宝",
+   "kind": "etf",
+   "days": 37
+  },
+  {
+   "code": "sz158023",
+   "name": "红利低波ETF万家",
+   "kind": "etf",
+   "days": 36
+  },
+  {
+   "code": "sh561690",
+   "name": "300质量ETF农银",
+   "kind": "etf",
+   "days": 36
+  },
+  {
+   "code": "sz158013",
+   "name": "航空航天ETF易方达",
+   "kind": "etf",
+   "days": 36
+  },
+  {
+   "code": "sh515440",
+   "name": "A股ETF南方",
+   "kind": "etf",
+   "days": 33
+  },
+  {
+   "code": "sz158028",
+   "name": "稀有金属ETF招商",
+   "kind": "etf",
+   "days": 32
+  },
+  {
+   "code": "sz159025",
+   "name": "家电ETF华安",
+   "kind": "etf",
+   "days": 31
+  },
+  {
+   "code": "sh562170",
+   "name": "沪深300现金流ETF易方达",
+   "kind": "etf",
+   "days": 31
+  },
+  {
+   "code": "sh512740",
+   "name": "汽车零部件ETF广发",
+   "kind": "etf",
+   "days": 31
+  },
+  {
+   "code": "sz158032",
+   "name": "化工ETF景顺",
+   "kind": "etf",
+   "days": 31
+  },
+  {
+   "code": "sh562150",
+   "name": "红利质量ETF鹏华",
+   "kind": "etf",
+   "days": 31
+  },
+  {
+   "code": "sz158061",
+   "name": "创业板算力ETF天弘",
+   "kind": "etf",
+   "days": 29
+  },
+  {
+   "code": "sh562110",
+   "name": "云计算50ETF东方红",
+   "kind": "etf",
+   "days": 29
+  },
+  {
+   "code": "sh561610",
+   "name": "绿色电力ETF鑫元",
+   "kind": "etf",
+   "days": 29
+  },
+  {
+   "code": "sz158038",
+   "name": "粮食ETF富国",
+   "kind": "etf",
+   "days": 29
+  },
+  {
+   "code": "sz158041",
+   "name": "创业板算力ETF华夏",
+   "kind": "etf",
+   "days": 28
+  },
+  {
+   "code": "sh589510",
+   "name": "科创新材料ETF易方达",
+   "kind": "etf",
+   "days": 28
+  },
+  {
+   "code": "sh515940",
+   "name": "电网设备ETF南方",
+   "kind": "etf",
+   "days": 28
+  },
+  {
+   "code": "sz158050",
+   "name": "创业板算力ETF易方达",
+   "kind": "etf",
+   "days": 27
+  },
+  {
+   "code": "sz158022",
+   "name": "创业板综增强ETF国联",
+   "kind": "etf",
+   "days": 27
+  },
+  {
+   "code": "sh516040",
+   "name": "300现金流ETF华夏",
+   "kind": "etf",
+   "days": 27
+  },
+  {
+   "code": "sz158049",
+   "name": "创业板算力ETF广发",
+   "kind": "etf",
+   "days": 25
+  },
+  {
+   "code": "sz158031",
+   "name": "创业板人工智能ETF易方达",
+   "kind": "etf",
+   "days": 25
+  },
+  {
+   "code": "sz158053",
+   "name": "创业板算力ETF大成",
+   "kind": "etf",
+   "days": 24
+  },
+  {
+   "code": "sz158057",
+   "name": "创业板算力ETF鹏华",
+   "kind": "etf",
+   "days": 24
+  },
+  {
+   "code": "sz158026",
+   "name": "大盘成长ETF华夏",
+   "kind": "etf",
+   "days": 24
+  },
+  {
+   "code": "sh589480",
+   "name": "科创芯片设计ETF嘉实",
+   "kind": "etf",
+   "days": 23
+  },
+  {
+   "code": "sz158056",
+   "name": "创业板算力ETF嘉实",
+   "kind": "etf",
+   "days": 23
+  },
+  {
+   "code": "sz158042",
+   "name": "恒生科技ETF富国",
+   "kind": "etf",
+   "days": 23
+  },
+  {
+   "code": "sz158063",
+   "name": "创业板算力ETF南方",
+   "kind": "etf",
+   "days": 23
+  },
+  {
+   "code": "sh512470",
+   "name": "工业有色ETF广发",
+   "kind": "etf",
+   "days": 23
+  },
+  {
+   "code": "sh515470",
+   "name": "人工智能ETF南方",
+   "kind": "etf",
+   "days": 23
+  },
+  {
+   "code": "sz158025",
+   "name": "创业板成长ETF鹏华",
+   "kind": "etf",
+   "days": 22
+  },
+  {
+   "code": "sh562450",
+   "name": "有色矿业ETF博时",
+   "kind": "etf",
+   "days": 22
+  },
+  {
+   "code": "sz158039",
+   "name": "港股通红利低波ETF广发",
+   "kind": "etf",
+   "days": 21
+  },
+  {
+   "code": "sh515540",
+   "name": "工业有色ETF浦银",
+   "kind": "etf",
+   "days": 20
+  },
+  {
+   "code": "sh562200",
+   "name": "红利质量ETF嘉实",
+   "kind": "etf",
+   "days": 20
+  },
+  {
+   "code": "sh561650",
+   "name": "红利质量ETF汇添富",
+   "kind": "etf",
+   "days": 20
+  },
+  {
+   "code": "sz158059",
+   "name": "创业板算力ETF富国",
+   "kind": "etf",
+   "days": 20
+  },
+  {
+   "code": "sh589490",
+   "name": "科创成长ETF华夏",
+   "kind": "etf",
+   "days": 20
+  },
+  {
+   "code": "sz158030",
+   "name": "航空航天ETF汇添富",
+   "kind": "etf",
+   "days": 18
+  },
+  {
+   "code": "sz158046",
+   "name": "卫星ETF南方",
+   "kind": "etf",
+   "days": 17
+  },
+  {
+   "code": "sh561070",
+   "name": "工程机械ETF工银",
+   "kind": "etf",
+   "days": 16
+  },
+  {
+   "code": "sz158058",
+   "name": "创业板金融科技ETF华泰柏瑞",
+   "kind": "etf",
+   "days": 15
+  },
+  {
+   "code": "sh562400",
+   "name": "金融科技ETF万家",
+   "kind": "etf",
+   "days": 15
+  },
+  {
+   "code": "sz158040",
+   "name": "科创创业人工智能ETF国联安",
+   "kind": "etf",
+   "days": 15
+  },
+  {
+   "code": "sz158043",
+   "name": "价值ETF南方",
+   "kind": "etf",
+   "days": 14
+  },
+  {
+   "code": "sz158037",
+   "name": "机器人ETF博时",
+   "kind": "etf",
+   "days": 14
+  },
+  {
+   "code": "sz158047",
+   "name": "粮食ETF永赢",
+   "kind": "etf",
+   "days": 14
+  },
+  {
+   "code": "sz158055",
+   "name": "创业板算力ETF国泰",
+   "kind": "etf",
+   "days": 13
+  },
+  {
+   "code": "sz158052",
+   "name": "创业板金融科技ETF景顺",
+   "kind": "etf",
+   "days": 13
+  },
+  {
+   "code": "sh526090",
+   "name": "港股通金融ETF富国",
+   "kind": "etf",
+   "days": 13
+  },
+  {
+   "code": "sh562420",
+   "name": "卫星ETF平安",
+   "kind": "etf",
+   "days": 13
+  },
+  {
+   "code": "sz158051",
+   "name": "金融科技ETF国联安",
+   "kind": "etf",
+   "days": 12
+  },
+  {
+   "code": "sz158062",
+   "name": "创业板金融科技ETF建信",
+   "kind": "etf",
+   "days": 12
+  },
+  {
+   "code": "sz158067",
+   "name": "创业板金融科技ETF万家",
+   "kind": "etf",
+   "days": 12
+  },
+  {
+   "code": "sz158072",
+   "name": "创业板软件ETF南方",
+   "kind": "etf",
+   "days": 11
+  },
+  {
+   "code": "sz159089",
+   "name": "港股通互联网ETF国联",
+   "kind": "etf",
+   "days": 10
+  },
+  {
+   "code": "sz159047",
+   "name": "港股信息技术ETF银华",
+   "kind": "etf",
+   "days": 10
+  },
+  {
+   "code": "sz158066",
+   "name": "大数据ETF前海开源",
+   "kind": "etf",
+   "days": 9
+  },
+  {
+   "code": "sz158036",
+   "name": "卫星ETF华夏",
+   "kind": "etf",
+   "days": 8
+  },
+  {
+   "code": "sz158078",
+   "name": "创业板电池ETF华宝",
+   "kind": "etf",
+   "days": 5
+  },
+  {
+   "code": "sz158082",
+   "name": "创业板电池ETF银华",
+   "kind": "etf",
+   "days": 4
+  },
+  {
+   "code": "sz158079",
+   "name": "创业板电池ETF华安",
+   "kind": "etf",
+   "days": 2
+  },
+  {
+   "code": "sz158065",
+   "name": "粮食ETF招商",
+   "kind": "etf",
+   "days": 2
+  }
+ ]
+}
