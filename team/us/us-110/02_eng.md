@@ -113,3 +113,38 @@ AC-5（静态/性能/体积）与 AC-7（合规）的最终结论留项目马复
 6. 4 个 sendBeacon 事件落库时窗口写入 `term`（`win:3m`），未新增 D1 列；`/api/report` 现有漏斗过滤 `search`，不受影响。
 7. AC-7 要求页面可见「不构成推荐」，同时禁用词清单又禁止「推荐」二字；页面采用「仅代表成交活跃度，不构成任何投资暗示」，请项目马确认该表述。
 8. headless 剪贴板限制导致 AC-6 的复制成功态未机器验证，需真实浏览器复核。
+
+## 九、六档 + 底座拼接 + 可解释性 + 中性分布（本轮实现）
+
+### 9.1 档位与底座
+
+- 档位固定 6 个：`3m`(60) / `2w`(10) / `4w`(20) / `6m`(120) / `9m`(180) / `12m`(240)，同一策略、同一复权口径；`2w/4w` 不默认选中。
+- 历史底座固定读取 `services/market-data/backtest-base/history_base.json`（与 `meta.json`），文件缺失直接 `FileNotFoundError` 终止构建，不静默降级；底座按日对齐的 `null` 停牌行跳过，不构造假 K 线。
+- 底座与 archive 严格禁止日期重叠（重叠即 `SystemExit`）；拼接后统一交给 `adjust_price_series`，**不做二次缩放**（meta `consumerNote`）。
+- 拼接连续性断言：archive 首个重叠日（2026-06-08）复权日收益 vs 原始日收益逐只对比，打印 510300/600519/300750 三只，实测差异均为 0.00pp。
+
+### 9.2 可用性与文案
+
+- 池级：`availableSymbols/sample` 与 `coverageNote` 由底座 `meta.constraints` 覆盖写入（`tiers` + `insufficient`），实测 3m/2w/4w=59/59、6m/9m=58/59、12m=57/59。
+- 标的级：窗口内可用交易日 < 门槛 → `available=false`，`reason` 为「该标的此区间数据不足（可用 N 个交易日）」；中微公司 12m 按 meta 声明写 235 日（计算值 231 日被 meta 口径覆盖）。
+- 12m 文案固定为「57/59 只满足 240 个交易日；中微公司 235 日、长鑫科技 66 日，数据不足」。
+- 方法级局限写入 `index.json#methodology` 与页面：漂移中位 0.0pp、最大 2.85pp（meta `worst=sh600036` 映射为招商银行），并保留「前复权、未计佣金与滑点」。
+
+### 9.3 自洽与体积（实测）
+
+- 构建期强校验：`sum(trade.pnl)=pnlTotal`、`100+cumReturn = equity 终点`、回撤区间一致；示例 510300 3m：pnlTotal -1006.0 / cumReturn -10.06%。
+- `index.json` 10,128B（≤150KB）；59 个 summary 最大 1,841B（≤20KB）；59 个 detail 合计 602,842B，单档最大 12m 4,137B（≤6KB/档）。
+- 构建耗时：real 2.09s / user 1.56s。
+- 幂等：连续两次构建 120 个 JSON 除 `generatedAt` 外差异为空。
+- 埋点新增 `backtest_detail_expand` / `backtest_detail_view`，`/api/track` 白名单与窗口集合同步扩展。
+
+### 9.4 页面
+
+- 回测页：新增「回测逻辑」四步说明；逐笔表与权益曲线按需加载（`detail/{code}.json`，同标的一次缓存）；摘要仍 <20KB。
+- 池内分布：5 项统计 + 4 档分布条，不点名、不排序、无 TOP/热门/推荐字样。
+- 内测路由 `/labs/backtest-top`：`noindex, nofollow`、`robots.txt` Disallow `/labs/`、无导航/sitemap/公开页链接；横幅与「未做访问控制」说明齐备。
+- 冒烟：1440 桌面端六档、12m 覆盖文案、中微 235 日、2w 样本不足、逐笔与曲线一致均通过；内测页 200/noindex/10 行且笔数 ≥5 通过。393px 因浏览器锁定 960 视口未能实测，纵向响应式由 `sm:hidden`/`hidden sm:block` 类保证。
+
+### 9.5 待确认
+
+- 底座 meta 的漂移最差标的为 `sh600036`（招商银行）；用户口述为「工商银行」（601398）。页面按 meta 渲染「招商银行」，若需改为工商银行请数据线更正 meta 或明确硬编码。

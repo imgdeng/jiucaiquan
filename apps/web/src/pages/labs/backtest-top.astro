@@ -1,0 +1,118 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ranking from "../../../public/data/backtest/internal/ranking.json";
+
+// us-114 B：TOP10 内测页（不对外）。noindex + robots 屏蔽 + 无站内入口。
+// 静态站没有真正的访问控制，noindex 仅影响搜索引擎收录。
+const WINDOW_ORDER = ["3m", "2w", "4w", "6m", "9m", "12m"] as const;
+const WINDOW_LABEL: Record<string, string> = {
+  "3m": "近 3 个月",
+  "2w": "近 2 周",
+  "4w": "近 4 周",
+  "6m": "近 6 个月",
+  "9m": "近 9 个月",
+  "12m": "近 12 个月",
+};
+const windows = WINDOW_ORDER.map((key) => ({
+  key,
+  label: WINDOW_LABEL[key] ?? key,
+  data: ranking.windows[key as keyof typeof ranking.windows],
+})).filter((item) => item.data);
+
+function pct(value: number, signed = false): string {
+  const sign = signed && value > 0 ? "+" : "";
+  return `${sign}${value.toFixed(2)}%`;
+}
+---
+
+<BaseLayout
+  title="回测收益排序（内测） | 韭菜圈"
+  description="内测页：按历史累计收益率排序的回测结果，不对外发布。"
+  noindex={true}
+>
+  <section class="mx-auto max-w-6xl px-4 py-10">
+    <div class="mb-6 rounded-md border border-amber-300 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900">
+      内测页 · 不对外发布 · 历史统计，不构成投资建议
+      <p class="mt-1 text-xs font-normal text-amber-800">
+        本页为内测用途，未做访问控制；noindex 仅影响搜索引擎收录，不阻止已知 URL 访问。
+      </p>
+    </div>
+
+    <div class="mb-6">
+      <p class="text-sm font-semibold text-leaf">内测</p>
+      <h1 class="mt-2 text-3xl font-bold md:text-4xl">回测收益排序（TOP10）</h1>
+      <p class="mt-3 max-w-3xl text-sm leading-7 text-stone-700">
+        按所选区间累计收益率降序，仅纳入平仓笔数 ≥ 5 的标的。排序只反映历史统计，不代表未来收益，不构成投资建议；数据与公开回测页同一产物。
+      </p>
+      <p class="mt-2 text-xs leading-6 text-stone-500">
+        数据截至 {ranking.latestDate} · 未计佣金与滑点 · 前复权
+      </p>
+    </div>
+
+    {windows.map(({ key, label, data }) => (
+      <section class="mb-6 rounded-lg border border-line bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-bold">
+          {label}
+          <span class="ml-2 text-xs font-normal text-stone-500">
+            {data.start} ~ {data.end}（{data.tradingDays} 个交易日）· 入榜门槛 {data.minTrades} 笔
+          </span>
+        </h2>
+
+        {data.entries.length === 0 ? (
+          <p class="mt-3 text-sm text-stone-600">该区间没有满足平仓笔数 ≥ {data.minTrades} 的标的。</p>
+        ) : (
+          <>
+            <div class="mt-3 hidden overflow-x-auto sm:block">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-line text-left text-stone-500">
+                    <th class="py-2 pr-3 font-medium">代码</th>
+                    <th class="py-2 pr-3 font-medium">名称</th>
+                    <th class="py-2 pr-3 font-medium">区间</th>
+                    <th class="py-2 pr-3 text-right font-medium">累计收益率</th>
+                    <th class="py-2 pr-3 text-right font-medium">胜率</th>
+                    <th class="py-2 text-right font-medium">笔数</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.entries.map((entry) => (
+                    <tr class="border-b border-line/70 last:border-b-0">
+                      <td class="py-2 pr-3 tabular-nums">{entry.code}</td>
+                      <td class="py-2 pr-3">{entry.name}</td>
+                      <td class="py-2 pr-3 tabular-nums text-stone-600">
+                        {data.start} ~ {data.end}
+                      </td>
+                      <td class="py-2 pr-3 text-right tabular-nums">{pct(entry.cumReturn, true)}</td>
+                      <td class="py-2 pr-3 text-right tabular-nums">{pct(entry.winRate)}</td>
+                      <td class="py-2 text-right tabular-nums">{entry.trades}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mt-3 space-y-2 sm:hidden">
+              {data.entries.map((entry) => (
+                <div class="rounded-md border border-line p-3 text-sm">
+                  <div class="flex items-baseline justify-between gap-3">
+                    <span class="font-semibold">
+                      {entry.code} {entry.name}
+                    </span>
+                    <span class="tabular-nums font-semibold">{pct(entry.cumReturn, true)}</span>
+                  </div>
+                  <p class="mt-1 text-xs leading-5 text-stone-600">
+                    区间 {data.start} ~ {data.end} · 胜率 {pct(entry.winRate)} · {entry.trades} 笔
+                  </p>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </section>
+    ))}
+
+    <p class="mt-6 text-xs leading-6 text-stone-600">
+      排序仅反映历史统计，不代表未来收益，不构成投资建议。本页无分享入口、无导出、无首页导航入口；不对公开页面提供任何数据引用。
+    </p>
+  </section>
+</BaseLayout>

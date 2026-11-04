@@ -19,6 +19,27 @@ import BacktestTool from "../../components/BacktestTool";
       本站内容和工具仅用于投资学习、策略研究和条件单辅助计算，不构成证券投资建议，不承诺收益；历史表现不代表未来收益。市场有风险，投资需独立判断。
     </div>
 
+    <section class="mb-6 rounded-lg border border-line bg-white p-5 shadow-sm">
+      <h2 class="text-xl font-bold">回测逻辑</h2>
+      <ol class="mt-3 list-decimal space-y-2 pl-5 text-sm leading-7 text-stone-700">
+        <li>
+          D 日（信号日）按日线 OHLC 计算 Pivot：基准价 = (2×收盘价 + 最高价 + 最低价) / 4，区间 = 最高价 - 最低价；低吸价 = 基准价 - 区间，高抛价 = 基准价 + 区间。
+        </li>
+        <li>
+          D+1 起判定：当日最低价 ≤ 低吸价则按低吸价买入；未触及则信号作废，不计入交易笔数。
+        </li>
+        <li>
+          持仓期间逐日检查：最高价 ≥ 高抛价则当日按高抛价卖出并平仓。
+        </li>
+        <li>
+          未达到高抛价：持有满 5 个交易日，按第 5 个交易日收盘价平仓；串行单仓，等额 1 万元/笔，不复利。
+        </li>
+      </ol>
+      <p class="mt-3 text-xs leading-6 text-stone-600">
+        数据口径：前复权（比率复权）。与官方 qfq 全窗口相比，本回测复权口径的漂移为中位 0.0pp、最大 2.85pp（招商银行），12m 绝对收益受此影响；未计佣金与滑点，亦不计其他费用。
+      </p>
+    </section>
+
     <BacktestTool client:load />
   </section>
 </BaseLayout>
