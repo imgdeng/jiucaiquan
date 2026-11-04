@@ -110,6 +110,9 @@ def main() -> int:
             if between:
                 gaps.append({"after": dates[i - 1], "before": dates[i], "missing": len(between)})
         coverage.append({
+            # days 是缓存全区间可用天数（如中微公司 235），不是 12m 窗口口径；
+            # 12m 窗口（合并索引末 240 日，2025-11-05 ~ 2026-11-03）的可用天数为 231，
+            # 以 backtest-base/meta.json 的 constraints.insufficient 为唯一正确口径。
             "code": code, "name": name, "kind": kind, "days": len(dates),
             "first": dates[0] if dates else None, "last": dates[-1] if dates else None,
             "thresholds": {label: len(dates) >= n for label, n in THRESHOLDS},

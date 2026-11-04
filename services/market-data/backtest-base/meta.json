@@ -1,6 +1,6 @@
 {
  "file": "history_base.json",
- "generatedAt": "2026-11-04T16:29:07+08:00",
+ "generatedAt": "2026-11-04T17:00:37+08:00",
  "generator": "services/market-data/build_backtest_base.py",
  "sources": {
   "cache": "services/market-data/cache/history/",
@@ -95,33 +95,86 @@
  "validation": {
   "spliceMaxDiffPp": 0.0,
   "driftVsQfqPp": {
+   "basis": "anchoredBaseVsQfq",
+   "compare": "history_base.json（锚定缩放后）全窗口区间收益 vs AkShare qfq",
    "median": 0.0,
    "maxAbs": 2.85,
    "worst": {
     "code": "sh600036",
+    "name": "招商银行",
     "driftPp": -2.85
-   }
+   },
+   "pageDisclosure": true,
+   "consumerNote": "页面与方法论只披露本组；build_backtest.py 读取本字段。"
   },
-  "auditRawBaseRef": {
+  "driftVsQfqRawBase": {
+   "basis": "rawBaseVsQfq",
+   "compare": "未缩放的原始 OHLC 底座（12m_audit 复抓口径）全窗口区间收益 vs AkShare qfq",
    "median": -0.14,
    "maxAbs": 6.72,
-   "note": "12m_audit.json 的 raw 底座口径，用于对照；本次底座实测更小"
+   "worst": {
+    "code": "sh601398",
+    "name": "工商银行",
+    "driftPp": -6.72
+   },
+   "runnersUp": [
+    {
+     "code": "sh600036",
+     "name": "招商银行",
+     "driftPp": -5.19
+    },
+    {
+     "code": "sh688256",
+     "name": "寒武纪",
+     "driftPp": 5.02
+    },
+    {
+     "code": "sh600519",
+     "name": "贵州茅台",
+     "driftPp": -3.88
+    },
+    {
+     "code": "sh603259",
+     "name": "药明康德",
+     "driftPp": -3.11
+    }
+   ],
+   "pageDisclosure": false,
+   "source": "team/us/us-110/12m_audit.json#splice.fullWindowDriftPp",
+   "consumerNote": "仅核查对照，页面不得披露 6.72pp。"
   }
  },
  "constraints": {
   "noFullPool12m": "不得写“全池 12 个月”；12m 仅 57/59 只满足 240 日",
+  "windows": {
+   "12m": {
+    "nominalTradingDays": 240,
+    "start": "2025-11-05",
+    "end": "2026-11-03",
+    "tradingDays": 240
+   }
+  },
+  "dateIndex": "合并索引 = 底座 144 日 + archive 99 日；archive/2026-06-09 的 snapshotAt 实为 2026-06-08，故合并索引与交易所日历相差 06-09，12m 窗口起点为 2025-11-05",
+  "insufficientWindowNote": "days 为 12m 窗口内可用天数；fullCacheDays 为缓存全区间天数，excludedFromWindow 列出被窗口排除的缓存日",
   "insufficient": [
-   {
-    "code": "sh688012",
-    "name": "中微公司",
-    "days": 235,
-    "gap": 5
-   },
    {
     "code": "sh688825",
     "name": "长鑫科技",
     "days": 66,
     "gap": 174
+   },
+   {
+    "code": "sh688012",
+    "name": "中微公司",
+    "days": 231,
+    "gap": 9,
+    "fullCacheDays": 235,
+    "excludedFromWindow": [
+     "2025-10-31",
+     "2025-11-03",
+     "2025-11-04",
+     "2026-06-09"
+    ]
    }
   ],
   "tiers": {
