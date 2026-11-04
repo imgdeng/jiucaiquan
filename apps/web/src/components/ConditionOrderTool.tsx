@@ -67,6 +67,7 @@ export default function ConditionOrderTool() {
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const [hotItems, setHotItems] = useState<TopItem[] | null>(null);
+  const [topDays, setTopDays] = useState(30);
 
   // us-104：ETF 白名单（归一化后 6 位码），用于按标的属性判定 asset，而非 toggle 启发式
   const etfSet = useMemo(() => buildEtfSet(etfQuotes.map((q) => q.code)), [etfQuotes]);
@@ -92,9 +93,10 @@ export default function ConditionOrderTool() {
     });
   }, []);
 
-  // 热门标的：进入计算器页拉取一次近 30 天 calculate Top5（us-105，原 us-102 热搜词切数据源）
+  // 近 N 天计算最多：进入计算器页拉取一次 calculate Top5（us-105，原 us-102 热搜词切数据源）；天数取接口口径
   useEffect(() => {
     loadJson<TopItems>("/api/top-items").then((data) => {
+      if (data?.days) setTopDays(data.days);
       setHotItems(data?.items?.length ? data.items.slice(0, 5) : []);
     });
   }, []);
@@ -315,7 +317,7 @@ export default function ConditionOrderTool() {
 
         {hotItems !== null && (
           <div className="mt-3">
-            <p className="text-sm font-semibold text-stone-600">热门标的</p>
+            <p className="text-sm font-semibold text-stone-600">近 {topDays} 天计算最多</p>
             {hotItems.length ? (
               <div className="mt-2 flex flex-wrap gap-2">
                 {hotItems.map((it) => (
@@ -332,7 +334,7 @@ export default function ConditionOrderTool() {
               </div>
             ) : (
               <p className="mt-2 text-sm text-stone-500">
-                暂无热门标的
+                近 {topDays} 天暂无计算记录
               </p>
             )}
           </div>
