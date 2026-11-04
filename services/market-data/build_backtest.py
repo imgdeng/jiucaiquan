@@ -439,7 +439,7 @@ def build_windows(
                         if detail["shortfall"] == []
                         else f"{detail['ok']}/{sample or total} 只满足 {min_days} 个交易日；"
                         + "、".join(f"{row['name']} {row['days']} 日" for row in detail["shortfall"])
-                        + "，数据不足"
+                        + f"，数据不足，故{label}档对上述 {len(detail['shortfall'])} 只标的不适用"
                     ),
                     "reason": None if detail["ok"] >= -(-(sample or total) // 2) else "可用标的不足",
                 }
@@ -981,7 +981,7 @@ def run_build(data_dir: Path, index_only: bool, base_path: Path = BASE_FILE) -> 
             if not shortfall
             else f"{ok_text}/{total_text} 只满足 {window['minTradingDays']} 个交易日；"
             + "、".join(f"{row.get('name')} {row.get('days')} 日" for row in shortfall)
-            + "，数据不足"
+            + f"，数据不足，故{window['label']}档对上述 {len(shortfall)} 只标的不适用"
         )
     print(
         "  档位可用标的数: "
@@ -1152,4 +1152,8 @@ if __name__ == "__main__":
         raise SystemExit(run_print_contract())
     if args.check:
         raise SystemExit(run_check(data_dir))
-    raise SystemExit(run_build(data_dir, args.index_only, Path(args.base_file).resolve()))
+    try:
+        raise SystemExit(run_build(data_dir, args.index_only, Path(args.base_file).resolve()))
+    except FileNotFoundError as exc:
+        print(f"[backtest] 历史底座缺失，已终止：{exc}", file=sys.stderr)
+        raise SystemExit(4)
