@@ -24,6 +24,7 @@ META_PATH = OUT_DIR / "meta.json"
 EVIDENCE_PATH = ROOT / "team" / "us" / "us-110" / "p1_evidence.json"
 
 BASE_START, BASE_END = "2025-10-31", "2026-06-05"
+TWELVE_MONTH_DAYS = 240
 
 sys.path.insert(0, str(SERVICE_DIR))
 from build_leaderboard import adjust_price_series  # noqa: E402
@@ -88,13 +89,26 @@ def main() -> int:
     if not base_dates:
         raise RuntimeError(f"底座区间无交易日：{BASE_START} ~ {BASE_END}")
 
+    # 12m 窗口按消费端实际合并索引（底座 + archive 真实交易日）取末 240 日，
+    # 不是按交易所日历直接取末 240 日：archive/2026-06-09 的 snapshotAt 实为 06-08，
+    # 合并索引里没有 06-09，窗口起点因此是 2025-11-05 而不是 2025-11-06。
+    combined = sorted(set(base_dates) | set(real_days))
+    win_12m = combined[-TWELVE_MONTH_DAYS:]
+    win_12m_set = set(win_12m)
+
     symbols, skipped, per_symbol_days = {}, [], {}
+    cache_days: dict[str, int] = {}
+    window_days: dict[str, int] = {}
+    excluded_days: dict[str, list[str]] = {}
     splice_diffs, drift_pp = [], []
     anchor_day = real_days[0]
 
     for item in sorted(pool, key=lambda x: x["code"]):
         code, kind, name = item["code"], item["kind"], item["name"]
         rows = load_cache(code, kind)
+        cache_days[code] = len(rows)
+        window_days[code] = sum(1 for d in win_12m if d in rows)
+        excluded_days[code] = sorted(set(rows) - win_12m_set)
         base = {d: rows[d] for d in base_dates if d in rows}
         arch = archive_px.get(code, {})
         if not base:
@@ -129,7 +143,7 @@ def main() -> int:
         common_all = sorted(set(adj) & set(qfq))
         if len(common_all) > 1:
             drift_pp.append((((adj[common_all[-1]] / adj[common_all[0]] - 1) -
-                              (qfq[common_all[-1]] / qfq[common_all[0]] - 1)) * 100, code))
+                               (qfq[common_all[-1]] / qfq[common_all[0]] - 1)) * 100, code, name))
 
     payload = {
         "schemaVersion": 1,
@@ -147,6 +161,19 @@ def main() -> int:
     )
 
     days = list(per_symbol_days.values())
+    twelve_ok = sum(1 for v in window_days.values() if v >= TWELVE_MONTH_DAYS)
+    insufficient = []
+    for item in pool:
+        code = item["code"]
+        avail = window_days[code]
+        if avail >= TWELVE_MONTH_DAYS:
+            continue
+        row = {"code": code, "name": item["name"], "days": avail,
+               "gap": TWELVE_MONTH_DAYS - avail}
+        if excluded_days[code]:
+            row["fullCacheDays"] = cache_days[code]
+            row["excludedFromWindow"] = excluded_days[code]
+        insufficient.append(row)
     meta = {
         "file": "history_base.json",
         "generatedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
@@ -172,20 +199,48 @@ def main() -> int:
         },
         "validation": {
             "spliceMaxDiffPp": round(max(splice_diffs), 3),
-            "driftVsQfqPp": {"median": round(statistics.median(x[0] for x in drift_pp), 2),
-                             "maxAbs": round(max(abs(x[0]) for x in drift_pp), 2),
-                             "worst": (lambda y: {"code": y[1], "driftPp": round(y[0], 2)})(
-                                 max(drift_pp, key=lambda x: abs(x[0])))},
-            "auditRawBaseRef": {"median": -0.14, "maxAbs": 6.72,
-                                "note": "12m_audit.json 的 raw 底座口径，用于对照；本次底座实测更小"},
+            "driftVsQfqPp": {
+                "basis": "anchoredBaseVsQfq",
+                "compare": "history_base.json（锚定缩放后）全窗口区间收益 vs AkShare qfq",
+                "median": round(statistics.median(x[0] for x in drift_pp), 2),
+                "maxAbs": round(max(abs(x[0]) for x in drift_pp), 2),
+                "worst": (lambda y: {"code": y[1], "name": y[2], "driftPp": round(y[0], 2)})(
+                    max(drift_pp, key=lambda x: abs(x[0]))),
+                "pageDisclosure": True,
+                "consumerNote": "页面与方法论只披露本组；build_backtest.py 读取本字段。",
+            },
+            "driftVsQfqRawBase": {
+                "basis": "rawBaseVsQfq",
+                "compare": "未缩放的原始 OHLC 底座（12m_audit 复抓口径）全窗口区间收益 vs AkShare qfq",
+                "median": -0.14,
+                "maxAbs": 6.72,
+                "worst": {"code": "sh601398", "name": "工商银行", "driftPp": -6.72},
+                "runnersUp": [
+                    {"code": "sh600036", "name": "招商银行", "driftPp": -5.19},
+                    {"code": "sh688256", "name": "寒武纪", "driftPp": 5.02},
+                    {"code": "sh600519", "name": "贵州茅台", "driftPp": -3.88},
+                    {"code": "sh603259", "name": "药明康德", "driftPp": -3.11},
+                ],
+                "pageDisclosure": False,
+                "source": "team/us/us-110/12m_audit.json#splice.fullWindowDriftPp",
+                "consumerNote": "仅核查对照，页面不得披露 6.72pp。",
+            },
         },
         "constraints": {
             "noFullPool12m": "不得写“全池 12 个月”；12m 仅 57/59 只满足 240 日",
-            "insufficient": [
-                {"code": "sh688012", "name": "中微公司", "days": 235, "gap": 5},
-                {"code": "sh688825", "name": "长鑫科技", "days": 66, "gap": 174},
-            ],
-            "tiers": {"2w": "59/59", "4w": "59/59", "6m": "58/59", "9m": "58/59", "12m": "57/59"},
+            "windows": {
+                "12m": {
+                    "nominalTradingDays": TWELVE_MONTH_DAYS,
+                    "start": win_12m[0], "end": win_12m[-1], "tradingDays": len(win_12m),
+                }
+            },
+            "dateIndex": "合并索引 = 底座 144 日 + archive 99 日；archive/2026-06-09 的 snapshotAt 实为 2026-06-08，"
+                         "故合并索引与交易所日历相差 06-09，12m 窗口起点为 2025-11-05",
+            "insufficientWindowNote": "days 为 12m 窗口内可用天数；fullCacheDays 为缓存全区间天数，"
+                                      "excludedFromWindow 列出被窗口排除的缓存日",
+            "insufficient": insufficient,
+            "tiers": {"2w": "59/59", "4w": "59/59", "6m": "58/59", "9m": "58/59",
+                      "12m": f"{twelve_ok}/{len(pool)}"},
         },
         "consumerContract": {
             "path": "services/market-data/backtest-base/history_base.json",
