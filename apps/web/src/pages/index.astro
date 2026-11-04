@@ -1,35 +1,62 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import StageLeaderboard from "../components/StageLeaderboard";
+import leaderboard from "../../public/data/leaderboard.json";
+import dataStatus from "../../public/data/data-status.json";
+import backtest from "../../public/data/backtest/index.json";
+
+const latestDate = leaderboard?.latestDate ?? "暂无数据";
+const updateIso = dataStatus?.generatedAt ?? dataStatus?.lastSuccessAt;
+const updatedAt = updateIso
+  ? new Date(updateIso).toLocaleString("sv-SE", { timeZone: "Asia/Shanghai" }).slice(0, 16)
+  : null;
+
+const availableWindows = backtest?.windows?.filter((item) => item.available) ?? [];
+const pendingWindows = backtest?.windows?.filter((item) => !item.available) ?? [];
+const windowText = availableWindows
+  .map((item) => `${item.label}（${item.tradingDays} 个交易日）`)
+  .join("、");
+const poolStats = backtest?.poolStats;
 ---
 <BaseLayout title="韭菜圈 | A 股条件单工具箱">
-  <section class="mx-auto grid max-w-6xl gap-8 px-4 py-12 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
+  <section class="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
     <div class="flex flex-col justify-center">
       <p class="mb-4 text-sm font-semibold text-leaf">A 股 ETF/股票条件单辅助工具</p>
       <h1 class="max-w-3xl text-4xl font-bold leading-tight md:text-6xl">把盘前计划变成可执行的条件单。</h1>
-      <p class="mt-6 max-w-2xl text-lg leading-8 text-stone-700">
-        韭菜圈先从一个高频工具开始：读取股票/ETF 行情快照，计算次日低吸价、高抛价和观察价，帮助你减少临盘情绪化操作。
+      <p class="mt-5 max-w-2xl text-lg leading-8 text-stone-700">
+        先用归档数据回测历史表现，再把盘前计划落成可执行的条件单，减少临盘情绪化操作。
       </p>
-      <div class="mt-8 flex flex-wrap gap-3">
-        <a href="/tools/condition-order" class="rounded-md bg-leaf px-5 py-3 font-semibold text-white shadow-sm hover:bg-emerald-800">打开计算器</a>
-        <a href="/tools/backtest" class="rounded-md border border-line bg-white px-5 py-3 font-semibold hover:border-leaf">查看历史回测</a>
-        <a href="/strategies/condition-order" class="rounded-md border border-line bg-white px-5 py-3 font-semibold hover:border-leaf">查看策略说明</a>
+      <div class="mt-7 flex flex-wrap gap-3">
+        <a href="/tools/backtest" class="inline-flex min-h-[44px] items-center rounded-md bg-leaf px-5 py-3 font-semibold text-white shadow-sm hover:bg-emerald-800">查看历史回测</a>
+        <a href="/tools/condition-order" class="inline-flex min-h-[44px] items-center rounded-md border border-line bg-white px-5 py-3 font-semibold hover:border-leaf">打开条件单计算器</a>
+        <a href="/strategies/condition-order" class="inline-flex min-h-[44px] items-center text-sm font-semibold text-leaf hover:underline">查看策略说明</a>
       </div>
     </div>
     <div class="rounded-lg border border-line bg-white p-5 shadow-sm">
-      <div class="mb-4 flex items-center justify-between">
-        <p class="font-semibold">Sprint 1 交付面板</p>
-        <span class="rounded-full bg-leaf/15 px-3 py-1 text-xs font-semibold text-leaf">工具已上线</span>
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <p class="font-semibold">今日工具台</p>
+        <span class="rounded-full bg-leaf/15 px-3 py-1 text-xs font-semibold text-leaf">当前能力</span>
       </div>
       <div class="grid gap-3">
         <div class="rounded-md border border-line p-4">
-          <p class="text-sm text-stone-600">核心工具</p>
-          <p class="mt-1 text-xl font-bold">ETF/股票次日条件单计算器</p>
+          <p class="text-sm text-stone-600">历史回测</p>
+          <p class="mt-1 text-lg font-bold leading-7">选标的与区间，查看胜率、收益率、最大回撤</p>
         </div>
         <div class="rounded-md border border-line p-4">
-          <p class="text-sm text-stone-600">数据形态</p>
-          <p class="mt-1 text-xl font-bold">盘中定时快照 + 手动兜底</p>
+          <p class="text-sm text-stone-600">次日条件单</p>
+          <p class="mt-1 text-lg font-bold leading-7">计算低吸价 / 高抛价，复制到券商</p>
         </div>
+      </div>
+      <div class="mt-4 rounded-md bg-rice p-4 text-sm leading-6">
+        <p class="font-semibold">数据状态</p>
+        <p class="mt-1 text-stone-700">
+          最新交易日 {latestDate}{updatedAt ? ` · 更新于 ${updatedAt}` : ""}
+        </p>
+        {poolStats && (
+          <p class="mt-1 text-stone-600">
+            当前覆盖 {poolStats.total} 只标的（ETF {poolStats.etf} · 个股 {poolStats.stock}）{windowText ? `，回测开放${windowText}` : ""}{pendingWindows.length > 0 ? `；${pendingWindows.map((item) => item.label).join("、")}数据积累中` : ""}。
+          </p>
+        )}
       </div>
     </div>
   </section>
