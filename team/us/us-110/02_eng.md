@@ -39,7 +39,7 @@ python3 services/market-data/build_backtest.py
 - 价格读取复用 `build_leaderboard.py` 的 `load_snapshots / build_panel / adjust_price_series`，前复权。
 - archive 的 `latest` 作为当日收盘价（`close` 字段是昨收，不用于当日 K 线）；用复权收盘价与 `latest` 的比值同比例修正 high/low/open。
 - 策略按 01_req §4：`base=(2*close+high+low)/4`、`range=high-low`、`buy=base-range`、`sell=base+range`；D+1 低吸、达到高抛价卖出、最长持有 5 个交易日（第 5 日收盘价结算）；串行单仓。
-- **货币/现金类 ETF 不入池**。在 `build_pool` 显式排除名称命中 `货币 / 日利 / 添利 / 现金` 的 ETF，并在池校验末尾做泄漏断言（命中即 `SystemExit`，关键词表为空也拒绝构建）。
+- **货币/债券类 ETF 不入池**。关键词表不硬编码，直接读取 P-1 证据 `moneyBondEtf.keywords`（当前 20 项）；`build_pool` 按该表排除 ETF，落盘后再回读 `index.json` 扫描池内名称，命中即 `SystemExit`；证据缺词表或词表为空也拒绝构建。
 - 指标：胜率=盈利笔数/平仓笔数；累计收益率=Σ单笔盈亏/10000；最大回撤按逐日权益（已实现盈亏 + 持仓浮动盈亏，初始资金 1 万元）。
 - 样本末段前瞻窗口不足 5 个交易日的信号无法完整结算，构建时直接跳过，不虚构平仓价；该处理需项目马复核。
 
@@ -86,7 +86,7 @@ AC-5（静态/性能/体积）与 AC-7（合规）的最终结论留项目马复
 ### P0-2 货币 ETF 入池（AC-2）
 
 - 根因：脚本此前只信任 P-1 证据池，未按名称排除货币/现金类 ETF，导致 511880 银华日利ETF 入池并按成交额排到默认第 2 位。
-- 修正：新增 `MONEY_ETF_KEYWORDS = ("货币", "日利", "添利", "现金")`，`build_pool` 内对 `asset == "etf"` 且名称命中的标的直接跳过并打印排除日志；池校验末尾追加泄漏断言（命中即 `SystemExit`），关键词表为空时也拒绝构建。
+- 修正：新增 `MONEY_ETF_KEYWORDS = ("货币", "日利", "添利", "现金")`，`build_pool` 内对 `asset == "etf"` 且名称命中的标的直接跳过并打印排除日志；池校验末尾追加泄漏断言（命中即 `SystemExit`），关键词表为空时也拒绝构建。（本轮 P2-1 已改为复用 P-1 证据词表 + 产物回读断言，见 §七）
 - 验证：当前 P-1 证据已为 59 只，实际构建不再触发排除分支；另用合成证据注入 `511880 银华日利ETF`，脚本输出「排除货币/现金类 ETF：511880 银华日利ETF」并从池中移除；把关键词表置空后构建报「货币 ETF 排除关键词缺失，拒绝构建」。
 - 结果：池 59 只（ETF 29 + 个股 30），仍满足 ≥50 与各类 ≥25；`summary/511880.json` 已删除。
 
@@ -95,10 +95,18 @@ AC-5（静态/性能/体积）与 AC-7（合规）的最终结论留项目马复
 - 修正：`.github/workflows/market-data.yml` 在行情构建与排行榜之后追加 `Build backtest static data`（`continue-on-error: true`），并新增 `Report backtest build failure` 步骤在失败时输出 `::warning::`；`git-auto-commit` 的 `file_pattern` 追加 `apps/web/public/data/backtest/index.json` 与 `apps/web/public/data/backtest/summary/*.json`。
 - 效果：回测构建失败不阻断行情提交，但会在 Actions 日志中以 warning 显式可见，不会静默；成功后次日页面数据随行情一起更新。
 
-## 七、需项目马复核
+## 七、终验收尾（P2）修复记录
+
+- **P2-1 货币/债券防线**：删除脚本内 4 词硬编码 `MONEY_ETF_KEYWORDS`，新增 `load_money_bond_keywords()` 从 P-1 证据 `moneyBondEtf.keywords`（20 项）读取，单一来源不复制；过滤用该表，泄漏断言移到落盘后 `assert_no_money_bond_leak()` 回读 `index.json` 扫描池内名称（与过滤器不同取值路径，避免同谓词恒空）。词表缺失/为空即 `SystemExit`。
+- 验证：用伪造 index 注入 `511880 银华日利ETF`，回读断言报「产物回读发现货币/债券类 ETF 仍在池内：511880 银华日利ETF」；证据删掉 `moneyBondEtf` 后报「P-1 证据缺少货币/债券 ETF 关键词表」并拒绝构建。
+- **P2-5 披露**：`BacktestTool.tsx` 策略标签改为「Pivot 条件单（次日低吸/高抛，最长持有 5 个交易日，到期按收盘平仓）」，与 01_req §4 冻结口径一致。
+- **P2-3 入口**：首页移除「Sprint 1 交付面板」里的回测卡片，仅保留 hero 的「查看历史回测」按钮，首页回到 1 个入口，与 AC-1 对齐。
+- 重跑复核：池 59 只（ETF 29 + 个股 30）、`latestDate=2026-11-03`、3m 60 个交易日；`index.json` 7,408B、59 个摘要 944–964B；连续两次构建除 `generatedAt` 外逐文件差异为空。
+
+## 八、需项目马复核
 
 1. P0-1 修正后的结算口径：`exit_idx = i + hold`、扫描 `range(i+1, i+hold+1)`，与 §四表格数字互为验证。
-2. P0-2 货币 ETF 排除与断言（关键词表 + 泄漏断言 + 空表拒绝构建）；当前证据已是 59 只，无重复剔除。
+2. P2-1 词表复用（P-1 证据 `moneyBondEtf.keywords`）与产物回读断言：断言与过滤器已分离取值路径，可被伪造产物触发。
 3. 样本末段不足 5 个交易日前瞻窗口的跳过规则（当前实现：不产生交易、不虚构平仓价）。
 4. `latest` 作为当日收盘价的字段语义，以及复权因子同比例修正 high/low/open；8 个非交易日假快照已按 P-1 剔除。
 5. 59 只池是否与更新后的 P-1 证据完全一致（脚本直接代入 `p1_evidence.json`，并断言 ≥50/各 ≥25、含 510300/600519、P-1 剔除标的不在池内、入池标的均 ≥60 日）。
