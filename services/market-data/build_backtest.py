@@ -1,7 +1,7 @@
 """us-110 回测 MVP 预计算脚本。
 
 - 复用 build_leaderboard.py 的 archive 读取与前复权实现，不新建数据源；
-- 按 P-1 结论剔除 8 个非交易日假快照，代入 P-1 证据池（60 只，成交额降序）；
+- 按 P-1 结论剔除 8 个非交易日假快照，代入 P-1 证据池（59 只，成交额降序）；
 - 按 01_req.md §4 冻结口径计算 3m 档胜率 / 累计收益率 / 最大回撤；
 - 输出契约：index.json（≤150KB）+ summary/{code}.json（≤20KB）；
 - 幂等：连续两次运行除 generatedAt 外字节一致；原子写入。
@@ -49,8 +49,7 @@ WINDOWS: tuple[tuple[str, str, int, int], ...] = (
     ("12m", "近 12 个月", 240, 240),
 )
 UNAVAILABLE_REASON = "数据积累中"
-# 货币/现金类 ETF 不得入池（名称命中即排除，并在构建末尾做泄漏断言）
-MONEY_ETF_KEYWORDS = ("货币", "日利", "添利", "现金")
+# 货币/债券类 ETF 不得入池；关键词表不在此硬编码，统一从 P-1 证据 moneyBondEtf.keywords 读取
 
 # 策略参数冻结于 01_req.md §4：rangeMultiplier=1 / weighted base / 最长持有 5 个交易日
 STRATEGY_META = {
@@ -162,15 +161,23 @@ def panel_by_norm_code(panel: dict[str, dict]) -> dict[str, tuple[str, dict]]:
     return out
 
 
-def build_pool(evidence: dict, leaderboard: dict) -> list[dict]:
-    """固定标的池：代入 P-1 证据池，显式排除货币/现金类 ETF，并按末日成交额降序。
+def load_money_bond_keywords(evidence: dict) -> tuple[str, ...]:
+    """复用 P-1 证据里的货币/债券 ETF 关键词表，避免与数据前置维护的第二份词表漂移。"""
+    raw = evidence.get("moneyBondEtf", {}).get("keywords")
+    if not isinstance(raw, list):
+        raise SystemExit("P-1 证据缺少货币/债券 ETF 关键词表（moneyBondEtf.keywords），拒绝构建")
+    keywords = tuple(dict.fromkeys(str(item).strip() for item in raw if str(item).strip()))
+    if not keywords:
+        raise SystemExit("货币/债券 ETF 关键词表为空，拒绝构建")
+    return keywords
+
+
+def build_pool(evidence: dict, leaderboard: dict, keywords: tuple[str, ...]) -> list[dict]:
+    """固定标的池：代入 P-1 证据池，显式排除货币/债券类 ETF，并按末日成交额降序。
 
     P-1 已完成成交额头部筛选、异常标的剔除与“不足 60 日”剔除；这里只做代入与校验，
     不重新推导，避免与书面结论产生第二套口径。
     """
-    if not MONEY_ETF_KEYWORDS:
-        raise SystemExit("货币 ETF 排除关键词缺失，拒绝构建")
-
     pool_symbols = evidence.get("pool", {}).get("symbols", [])
     excluded = {normalize_code(item.get("code")) for item in evidence.get("excluded", [])}
 
@@ -192,8 +199,8 @@ def build_pool(evidence: dict, leaderboard: dict) -> list[dict]:
         row = rows_by_code.get(code)
         name = str(symbol.get("name") or (row or {}).get("name") or code).strip()
         asset = str(symbol.get("kind") or "").strip()
-        if asset == "etf" and any(keyword in name for keyword in MONEY_ETF_KEYWORDS):
-            print(f"[backtest] 排除货币/现金类 ETF：{code} {name}", file=sys.stderr)
+        if asset == "etf" and any(keyword in name for keyword in keywords):
+            print(f"[backtest] 排除货币/债券类 ETF：{code} {name}", file=sys.stderr)
             continue
         pool.append(
             {
@@ -223,12 +230,23 @@ def build_pool(evidence: dict, leaderboard: dict) -> list[dict]:
         if not item or item["asset"] != forced_asset:
             raise SystemExit(f"P-1 标的池缺少必备标的：{forced_code} ({forced_asset})")
 
-    # 构建断言：货币/现金类 ETF 命中即退出
-    leaked = [item for item in pool if item["asset"] == "etf" and any(k in item["name"] for k in MONEY_ETF_KEYWORDS)]
+    return pool
+
+
+def assert_no_money_bond_leak(index_path: Path, keywords: tuple[str, ...]) -> None:
+    """产物回读断言：重新读取落盘的 index.json，确认池内没有货币/债券类 ETF 残留。
+
+    与过滤逻辑分开取值：前者写内存池，后者从磁盘回读，避免“同谓词同列表、断言恒空”。
+    """
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    leaked = [
+        item
+        for item in index.get("pool", [])
+        if item.get("asset") == "etf" and any(keyword in str(item.get("name") or "") for keyword in keywords)
+    ]
     if leaked:
         detail = ", ".join(f"{item['code']} {item['name']}" for item in leaked)
-        raise SystemExit(f"货币/现金类 ETF 仍在池内：{detail}")
-    return pool
+        raise SystemExit(f"产物回读发现货币/债券类 ETF 仍在池内：{detail}")
 
 
 def build_windows(dates: list[str]) -> list[dict]:
@@ -512,7 +530,8 @@ def run_build(data_dir: Path, index_only: bool) -> int:
 
     stock_panel = build_panel(dates, stocks_by_date, "stock")
     etf_panel = build_panel(dates, etfs_by_date, "etf")
-    pool = build_pool(evidence, leaderboard)
+    keywords = load_money_bond_keywords(evidence)
+    pool = build_pool(evidence, leaderboard, keywords)
 
     generated_at = datetime.now().astimezone().isoformat(timespec="seconds")
     index = build_index(dates, pool, generated_at)
@@ -523,6 +542,7 @@ def run_build(data_dir: Path, index_only: bool) -> int:
 
     if index_only:
         write_json_atomic(out_dir / "index.json", index)
+        assert_no_money_bond_leak(out_dir / "index.json", keywords)
         print(f"backtest index written: {out_dir / 'index.json'} ({len(dump_bytes(index))}B)")
         print(f"  pool: {index['poolStats']}")
         print(f"  windows: {[(w['key'], w['available'], w['tradingDays']) for w in index['windows']]}")
@@ -544,6 +564,7 @@ def run_build(data_dir: Path, index_only: bool) -> int:
     for stale in summary_dir.glob("*.json"):
         if stale not in written_paths:
             stale.unlink()
+    assert_no_money_bond_leak(out_dir / "index.json", keywords)
 
     sample = summaries.get("510300") or next(iter(summaries.values()))
     sample_result = sample["windows"]["3m"]

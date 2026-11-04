@@ -303,7 +303,9 @@ export default function BacktestTool() {
           disabled={controlsDisabled}
           onChange={() => {}}
         >
-          <option value="pivot-condition-order">Pivot 条件单（次日低吸/高抛）</option>
+          <option value="pivot-condition-order">
+            Pivot 条件单（次日低吸/高抛，最长持有 5 个交易日，到期按收盘平仓）
+          </option>
         </select>
 
         <p className="mt-5 text-sm font-semibold">区间</p>
