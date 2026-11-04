@@ -35,9 +35,11 @@ const EVENTS = new Set([
   "backtest_result",
   "backtest_copy",
   "backtest_copy_fail",
+  "backtest_detail_expand",
+  "backtest_detail_view",
 ]);
 const ASSETS = new Set(["etf", "stock"]);
-const WINDOWS = new Set(["3m", "6m", "12m"]);
+const WINDOWS = new Set(["3m", "2w", "4w", "6m", "9m", "12m"]);
 const MAX_BODY_BYTES = 2048;
 
 function cleanText(value: unknown, max: number): string | null {

@@ -3,7 +3,9 @@ import "../styles.css";
 
 const {
   title = "韭菜圈",
-  description = "A 股 ETF/股票条件单辅助计算与策略复盘工具。"
+  description = "A 股 ETF/股票条件单辅助计算与策略复盘工具。",
+  // 内测/不对外页面：noindex 仅影响搜索引擎收录，不构成访问控制
+  noindex = false
 } = Astro.props;
 ---
 <!doctype html>
@@ -12,6 +14,7 @@ const {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <title>{title}</title>
   </head>
   <body class="min-h-screen bg-rice text-ink">
