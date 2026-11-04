@@ -5,7 +5,48 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   <section class="mx-auto max-w-4xl px-4 py-10">
     <p class="text-sm font-semibold text-leaf">Build in public</p>
     <h1 class="mt-2 text-3xl font-bold md:text-5xl">迭代日志</h1>
+    <p class="mt-3 text-sm text-stone-600">最后更新 2026-11-04</p>
     <div class="mt-8 space-y-4">
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-11-04</p>
+        <h2 class="mt-2 text-xl font-bold">首页改版：回测提到首屏主位，右侧换成「今日工具台」</h2>
+        <p class="mt-3 leading-8 text-stone-700">把首页要回答的问题从「我们交付了第几个迭代」改回「现在能做什么」：Hero 主按钮改为「查看历史回测」，条件单计算器降为次按钮；右侧删掉「Sprint 1 交付面板」，换成「今日工具台」——历史回测、次日条件单两张能力卡，加一块数据状态（最新交易日、更新时间、当前覆盖 59 只标的与可用的回测档位，全部从产物读取，不写死）。同一轮把本页从 2026-06-11 补到 2026-11-04，公开施工记录重新与真实交付对齐。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-11-04</p>
+        <h2 class="mt-2 text-xl font-bold">回测 MVP 上线：59 只标的、近 3 个月、第 5 个交易日收盘结算</h2>
+        <p class="mt-3 leading-8 text-stone-700">先出数据前置结论再动页面：archive 可用 99 个交易日（2026-06-08 起），据此只开放「近 3 个月」一档（实际 60 个交易日），6m/12m 保留入口但标注「数据积累中」，不猜数字。标的池按末日成交额排序取 59 只（ETF 29 + 个股 30），显式排除货币/债券类 ETF；策略只挂 Pivot 条件单，最长持有 5 个交易日、到期按第 5 日收盘结算。预验收抓到两个 P0——原实现按 4 个交易日结算、511880 货币 ETF 混入池——以及一个 P1：产物未接入每日行情重建，三项全部修复后全池 59/59 独立复算与产物一致，终验通过、按 11/08 上线。页面全静态，只请求索引与单份摘要。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-10-11</p>
+        <h2 class="mt-2 text-xl font-bold">26.10.1 收口：先把数据修准，再修复制漏斗</h2>
+        <p class="mt-3 leading-8 text-stone-700">三件事一起收：①标的归一化——600519 在报表里被标成 ETF，sh600519 与 600519 同时存在，影响 30 天计算量的 24.7%，改为全链路统一 6 位码 + ETF 白名单归类，并补 74 条回归断言；②复制漏斗——查清 89 次计算只换来 2 次复制的真因（剪贴板失败没有兜底、复制文案缺买卖方向与基准价），补 copy_click / copy_fail 三段埋点、重写复制文案，把「大家都在搜」换成近 30 天计算次数 Top5；③周报恢复 30 天窗口（155 个 sid），给 09-29 那份只有 9 个 sid 的周报加上修正注记，并把拖了 10 天未收口的 26.9.4 迭代卡补齐。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-09-29</p>
+        <h2 class="mt-2 text-xl font-bold">26.9.4 交付：反馈入口、搜索标签、移动端 393px</h2>
+        <p class="mt-3 leading-8 text-stone-700">全站页脚加了用户反馈入口（飞书表单，新标签打开）；计算器页加了「大家都在搜」Top5；四个页面按 393px 重排，导航、按钮、页脚统一到 44px 触控目标。同日产出首份运营周报，但单周只有 9 个 sid，得出的「计算器零使用」后来被 30 天窗口证伪——低样本不下结论，写进了下一轮复盘。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-09-08</p>
+        <h2 class="mt-2 text-xl font-bold">阶段排行榜上线：个股 / ETF / 板块 × 4 个区间</h2>
+        <p class="mt-3 leading-8 text-stone-700">新增阶段排行榜组件与数据管道：个股、ETF、板块三类，支持近 1 周 / 近 1 月 / 近 3 月 / 今年来四档涨跌幅，随每日行情快照更新。首页从「只有一个计算器」变成「工具 + 看板」，也让「市场处在什么位置」这件事第一次有了可查的入口。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-09-04</p>
+        <h2 class="mt-2 text-xl font-bold">埋点线上验证 + 搜索噪音修复</h2>
+        <p class="mt-3 leading-8 text-stone-700">D1 库建表、Pages 绑定 DB、REPORT_KEY 配置完成，线上实测搜索、选择、计算、自选、切 tab 均能落库，报表接口正确 KEY 返回 200、错误 KEY 返回 403，配置手册沉淀到 docs/telemetry-setup.md。首日数据审计抓到三类假搜索词——拼音中间态（如 si wei）、点选后的自动回填、无意义单字符——用输入法组合事件拦截、回填去重和拉丁词长度门槛修掉。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-09-03</p>
+        <h2 class="mt-2 text-xl font-bold">匿名埋点上线：Pages Functions + D1</h2>
+        <p class="mt-3 leading-8 text-stone-700">用 Cloudflare Pages Functions 承接上报接口，事件白名单加字段收敛后写入 D1；匿名 ID 由浏览器本地随机生成，不采集 IP、UA、完整 URL 与身份信息，合规说明同步写进 docs/compliance.md。同时补了带 REPORT_KEY 鉴权的内部报表接口。至此「用户到底在搜什么、算什么」第一次有了可查的数据，而不是靠猜。</p>
+      </article>
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-09-02</p>
+        <h2 class="mt-2 text-xl font-bold">行情归档的两个多月：没有功能提交，数据一天没停</h2>
+        <p class="mt-3 leading-8 text-stone-700">6 月中到 9 月初没有功能提交，但每日 6 次快照与收盘归档一直在跑：9 月初累计 359 次自动数据提交、64 个交易日归档，单日覆盖 5548 只个股 + 1651 只 ETF。这批 archive 后来成了回测唯一的数据来源——功能可以停，底座不能断。</p>
+      </article>
       <article class="rounded-lg border border-line bg-white p-6">
         <p class="text-sm text-stone-600">2026-06-11</p>
         <h2 class="mt-2 text-xl font-bold">D1-D4 工具迭代</h2>
