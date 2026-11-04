@@ -12,10 +12,14 @@ const updatedAt = updateIso
   : null;
 
 const availableWindows = backtest?.windows?.filter((item) => item.available) ?? [];
-const pendingWindows = backtest?.windows?.filter((item) => !item.available) ?? [];
-const windowText = availableWindows
-  .map((item) => `${item.label}（${item.tradingDays} 个交易日）`)
-  .join("、");
+const shortLabel = (label: string) => label.replace(/^近\s*/, "");
+const sortedWindows = [...availableWindows].sort(
+  (a, b) => (a.tradingDays ?? a.minTradingDays ?? 0) - (b.tradingDays ?? b.minTradingDays ?? 0)
+);
+const windowRange =
+  sortedWindows.length >= 2
+    ? `${shortLabel(sortedWindows[0].label)} ~ ${shortLabel(sortedWindows[sortedWindows.length - 1].label)}`
+    : "2 周 ~ 12 个月";
 const poolStats = backtest?.poolStats;
 ---
 <BaseLayout title="韭菜圈 | A 股条件单工具箱">
@@ -54,7 +58,7 @@ const poolStats = backtest?.poolStats;
         </p>
         {poolStats && (
           <p class="mt-1 text-stone-600">
-            当前覆盖 {poolStats.total} 只标的（ETF {poolStats.etf} · 个股 {poolStats.stock}）{windowText ? `，回测开放${windowText}` : ""}{pendingWindows.length > 0 ? `；${pendingWindows.map((item) => item.label).join("、")}数据积累中` : ""}。
+            当前覆盖 {poolStats.total} 只标的（ETF {poolStats.etf} · 个股 {poolStats.stock}），回测覆盖 {windowRange}。
           </p>
         )}
       </div>
