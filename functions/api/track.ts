@@ -31,8 +31,13 @@ const EVENTS = new Set([
   "watch_remove",
   "leaderboard_view",
   "leaderboard_switch",
+  "backtest_view",
+  "backtest_result",
+  "backtest_copy",
+  "backtest_copy_fail",
 ]);
 const ASSETS = new Set(["etf", "stock"]);
+const WINDOWS = new Set(["3m", "6m", "12m"]);
 const MAX_BODY_BYTES = 2048;
 
 function cleanText(value: unknown, max: number): string | null {
@@ -68,6 +73,7 @@ export async function onRequestPost({ request, env }: FunctionContext): Promise<
     const ts =
       typeof data.ts === "number" && data.ts > 0 && data.ts < 4.1e12 ? data.ts : Date.now();
     const asset = ASSETS.has(data.asset as string) ? (data.asset as string) : null;
+    const win = WINDOWS.has(data.window as string) ? (data.window as string) : null;
     const countryMatch = (request.headers.get("cf-ipcountry") || "").match(/^[A-Z]{2}$/);
     const country = countryMatch ? countryMatch[0] : null;
 
@@ -84,7 +90,8 @@ export async function onRequestPost({ request, env }: FunctionContext): Promise<
         // us-104：入库前归一化 code，sh600519/600519 统一为 600519；非法码存 NULL
         normalizeCode(data.code),
         cleanText(data.name, 20),
-        cleanText(data.term, 24),
+        // 现有表无 window 列：回测档位以 namespaced term 落库（如 win:3m），不新增迁移
+        cleanText(data.term, 24) ?? (win ? `win:${win}` : null),
         cleanSid(data.sid),
         country,
       )

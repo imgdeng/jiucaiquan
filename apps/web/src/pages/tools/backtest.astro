@@ -1,0 +1,24 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BacktestTool from "../../components/BacktestTool";
+---
+<BaseLayout
+  title="回测 · 历史表现 | 韭菜圈"
+  description="按固定的 Pivot 条件单规则查看历史表现：胜率、累计收益率、最大回撤。仅用于策略学习与复盘。"
+>
+  <section class="mx-auto max-w-6xl px-4 py-10">
+    <div class="mb-6">
+      <p class="text-sm font-semibold text-leaf">历史表现</p>
+      <h1 class="mt-2 text-3xl font-bold md:text-5xl">条件单策略回测</h1>
+      <p class="mt-4 max-w-3xl leading-8 text-stone-700">
+        选择一个预置标的与区间，查看按同一套 Pivot 条件单规则执行的历史统计。结果由归档行情预计算，仅用于策略学习与复盘。
+      </p>
+    </div>
+
+    <div class="mb-6 rounded-md border border-line bg-white/75 p-4 text-sm leading-7 text-stone-700">
+      本站内容和工具仅用于投资学习、策略研究和条件单辅助计算，不构成证券投资建议，不承诺收益；历史表现不代表未来收益。市场有风险，投资需独立判断。
+    </div>
+
+    <BacktestTool client:load />
+  </section>
+</BaseLayout>

@@ -14,13 +14,19 @@ export type TrackEvent =
   | "watch_add"
   | "watch_remove"
   | "leaderboard_view"
-  | "leaderboard_switch";
+  | "leaderboard_switch"
+  | "backtest_view"
+  | "backtest_result"
+  | "backtest_copy"
+  | "backtest_copy_fail";
 
 export type TrackPayload = {
   asset?: "etf" | "stock";
   code?: string;
   name?: string;
   term?: string;
+  /** backtest_* 的区间档位（3m/6m/12m） */
+  window?: "3m" | "6m" | "12m";
   /** copy_fail 失败原因分类（not_allowed/no_user_gesture/unknown） */
   reason?: string;
 };

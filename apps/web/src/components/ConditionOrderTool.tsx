@@ -7,6 +7,7 @@ import {
   validateOHLC,
 } from "../lib/strategies/condition-order";
 import { track } from "../lib/telemetry";
+import { copyText as writeClipboard } from "../lib/clipboard";
 import { normalizeCode, classifyAsset, buildEtfSet } from "../lib/symbol";
 
 type QuoteSnapshot = {
@@ -47,37 +48,6 @@ async function loadJson<T>(path: string): Promise<T | null> {
   } catch {
     return null;
   }
-}
-
-/** us-105：navigator.clipboard 不可用时的 execCommand 兜底（同步 API，选中隐藏 textarea 复制） */
-function execCommandFallback(text: string): boolean {
-  try {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.setAttribute("readonly", "");
-    ta.style.position = "fixed";
-    ta.style.top = "0";
-    ta.style.left = "-9999px";
-    ta.style.opacity = "0";
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    const ok = document.execCommand("copy");
-    document.body.removeChild(ta);
-    return ok;
-  } catch {
-    return false;
-  }
-}
-
-/** us-105：将 clipboard 异常归类为可读 reason（not_allowed/no_user_gesture/unknown） */
-function classifyCopyError(err: unknown): string {
-  if (err && typeof err === "object") {
-    const name = (err as { name?: string }).name;
-    if (name === "NotAllowedError") return "not_allowed";
-    if (name === "SecurityError" || name === "AbortError") return "no_user_gesture";
-  }
-  return "unknown";
 }
 
 export default function ConditionOrderTool() {
@@ -261,22 +231,15 @@ export default function ConditionOrderTool() {
     };
     // us-105：三段埋点——点击即记 copy_click；成功记 copy；失败记 copy_fail
     track("copy_click", payload);
-    try {
-      await navigator.clipboard.writeText(copyText);
+    const outcome = await writeClipboard(copyText);
+    if (outcome.ok) {
       track("copy", payload);
       setCopied(true);
       setCopyFailed(false);
-    } catch (err) {
-      // fallback：execCommand 兜底（非 HTTPS / 权限被拒 / 无用户手势场景）
-      if (execCommandFallback(copyText)) {
-        track("copy", payload);
-        setCopied(true);
-        setCopyFailed(false);
-      } else {
-        track("copy_fail", { ...payload, reason: classifyCopyError(err) });
-        setCopied(false);
-        setCopyFailed(true);
-      }
+    } else {
+      track("copy_fail", { ...payload, reason: outcome.reason });
+      setCopied(false);
+      setCopyFailed(true);
     }
     setTimeout(() => {
       setCopied(false);
