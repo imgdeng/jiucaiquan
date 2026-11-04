@@ -1,0 +1,1417 @@
+{
+ "generatedAt": "2026-11-04T16:18:54+08:00",
+ "pool": {
+  "total": 59,
+  "etf": 29,
+  "stock": 30
+ },
+ "coverage": {
+  "min": 66,
+  "max": 244,
+  "median": 243,
+  "thresholds": {
+   "2w": {
+    "ok": 59,
+    "notOk": 0,
+    "required": 10,
+    "minDays": 66,
+    "shortfall": []
+   },
+   "4w": {
+    "ok": 59,
+    "notOk": 0,
+    "required": 20,
+    "minDays": 66,
+    "shortfall": []
+   },
+   "6m": {
+    "ok": 58,
+    "notOk": 1,
+    "required": 120,
+    "minDays": 66,
+    "shortfall": [
+     {
+      "code": "sh688825",
+      "name": "长鑫科技",
+      "days": 66,
+      "gap": 54
+     }
+    ]
+   },
+   "9m": {
+    "ok": 58,
+    "notOk": 1,
+    "required": 180,
+    "minDays": 66,
+    "shortfall": [
+     {
+      "code": "sh688825",
+      "name": "长鑫科技",
+      "days": 66,
+      "gap": 114
+     }
+    ]
+   },
+   "12m": {
+    "ok": 57,
+    "notOk": 2,
+    "required": 240,
+    "minDays": 66,
+    "shortfall": [
+     {
+      "code": "sh688825",
+      "name": "长鑫科技",
+      "days": 66,
+      "gap": 174
+     },
+     {
+      "code": "sh688012",
+      "name": "中微公司",
+      "days": 235,
+      "gap": 5
+     }
+    ]
+   }
+  },
+  "symbols": [
+   {
+    "code": "sh588000",
+    "name": "科创50ETF华夏",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz159915",
+    "name": "创业板ETF易方达",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh510300",
+    "name": "沪深300ETF华泰柏瑞",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh513310",
+    "name": "中韩半导体ETF华泰柏瑞",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh510050",
+    "name": "上证50ETF华夏",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh512100",
+    "name": "中证1000ETF南方",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh510500",
+    "name": "中证500ETF南方",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh510310",
+    "name": "沪深300ETF易方达",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz159919",
+    "name": "沪深300ETF嘉实",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh563360",
+    "name": "A500ETF华泰柏瑞",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz159338",
+    "name": "中证A500ETF国泰",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh513120",
+    "name": "港股创新药ETF广发",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz159352",
+    "name": "A500ETF南方",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh510330",
+    "name": "沪深300ETF华夏",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh513090",
+    "name": "香港证券ETF易方达",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz159361",
+    "name": "A500ETF易方达",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh518880",
+    "name": "黄金ETF华安",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz159949",
+    "name": "创业板50ETF华安",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh588080",
+    "name": "科创50ETF易方达",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz159845",
+    "name": "中证1000ETF华夏",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh513180",
+    "name": "恒生科技ETF华夏",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh512050",
+    "name": "A500ETF华夏",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh513130",
+    "name": "恒生科技ETF华泰柏瑞",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh512880",
+    "name": "证券ETF国泰",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz159952",
+    "name": "创业板ETF广发",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz159792",
+    "name": "港股通互联网ETF富国",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh560010",
+    "name": "中证1000ETF广发",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh513330",
+    "name": "恒生互联网ETF华夏",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh513050",
+    "name": "中概互联网ETF易方达",
+    "kind": "etf",
+    "days": 243,
+    "first": "2025-11-03",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz300308",
+    "name": "中际旭创",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh688825",
+    "name": "长鑫科技",
+    "kind": "stock",
+    "days": 66,
+    "first": "2026-07-27",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": false,
+     "9m": false,
+     "12m": false
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz300750",
+    "name": "宁德时代",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh688256",
+    "name": "寒武纪",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz002384",
+    "name": "东山精密",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh600519",
+    "name": "贵州茅台",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh603986",
+    "name": "兆易创新",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh600183",
+    "name": "生益科技",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh601899",
+    "name": "紫金矿业",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh688008",
+    "name": "澜起科技",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz300274",
+    "name": "阳光电源",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh600036",
+    "name": "招商银行",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh603259",
+    "name": "药明康德",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz002463",
+    "name": "沪电股份",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz300059",
+    "name": "东方财富",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz300476",
+    "name": "胜宏科技",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz300223",
+    "name": "君正股份",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh600487",
+    "name": "亨通光电",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh601398",
+    "name": "工商银行",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz002371",
+    "name": "北方华创",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh688981",
+    "name": "中芯国际",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz300408",
+    "name": "三环集团",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh688012",
+    "name": "中微公司",
+    "kind": "stock",
+    "days": 235,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": false
+    },
+    "missingTradingDays": 9,
+    "maxGap": 9
+   },
+   {
+    "code": "sh601138",
+    "name": "工业富联",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh688498",
+    "name": "源杰科技",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh688041",
+    "name": "海光信息",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz000725",
+    "name": "京东方Ａ",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz002475",
+    "name": "立讯精密",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sh600030",
+    "name": "中信证券",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   },
+   {
+    "code": "sz300413",
+    "name": "芒果超媒",
+    "kind": "stock",
+    "days": 244,
+    "first": "2025-10-31",
+    "last": "2026-11-03",
+    "thresholds": {
+     "2w": true,
+     "4w": true,
+     "6m": true,
+     "9m": true,
+     "12m": true
+    },
+    "missingTradingDays": 0,
+    "maxGap": 0
+   }
+  ]
+ },
+ "continuity": {
+  "calendar": {
+   "start": "2025-10-31",
+   "end": "2026-11-03",
+   "days": 244
+  },
+  "duplicateDays": 0,
+  "nonTradingDates": {},
+  "symbolsWithMissing": 1,
+  "missingTotal": 9,
+  "maxSingleGap": 9,
+  "missingDates": {
+   "sh688012": [
+    "2025-12-19",
+    "2025-12-22",
+    "2025-12-23",
+    "2025-12-24",
+    "2025-12-25",
+    "2025-12-26",
+    "2025-12-29",
+    "2025-12-30",
+    "2025-12-31"
+   ]
+  }
+ },
+ "priceOverlap": {
+  "symbolsCompared": 59,
+  "maxDeviation": 0.0,
+  "worst": [
+   {
+    "code": "sh588000",
+    "name": "科创50ETF华夏",
+    "dates": 99,
+    "maxDeviation": 0.0
+   },
+   {
+    "code": "sz159915",
+    "name": "创业板ETF易方达",
+    "dates": 99,
+    "maxDeviation": 0.0
+   },
+   {
+    "code": "sh510300",
+    "name": "沪深300ETF华泰柏瑞",
+    "dates": 99,
+    "maxDeviation": 0.0
+   },
+   {
+    "code": "sh513310",
+    "name": "中韩半导体ETF华泰柏瑞",
+    "dates": 99,
+    "maxDeviation": 0.0
+   },
+   {
+    "code": "sh510050",
+    "name": "上证50ETF华夏",
+    "dates": 99,
+    "maxDeviation": 0.0
+   }
+  ],
+  "samplePoints": [
+   {
+    "code": "sh588000",
+    "date": "2026-06-08",
+    "baseRaw": 1.683,
+    "archiveRaw": 1.683,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh588000",
+    "date": "2026-07-14",
+    "baseRaw": 2.125,
+    "archiveRaw": 2.125,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh588000",
+    "date": "2026-08-18",
+    "baseRaw": 1.888,
+    "archiveRaw": 1.888,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh588000",
+    "date": "2026-09-22",
+    "baseRaw": 1.758,
+    "archiveRaw": 1.758,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh588000",
+    "date": "2026-11-03",
+    "baseRaw": 1.215,
+    "archiveRaw": 1.215,
+    "deviation": 0.0
+   },
+   {
+    "code": "sz159915",
+    "date": "2026-06-08",
+    "baseRaw": 3.827,
+    "archiveRaw": 3.827,
+    "deviation": 0.0
+   },
+   {
+    "code": "sz159915",
+    "date": "2026-07-14",
+    "baseRaw": 3.867,
+    "archiveRaw": 3.867,
+    "deviation": 0.0
+   },
+   {
+    "code": "sz159915",
+    "date": "2026-08-18",
+    "baseRaw": 3.723,
+    "archiveRaw": 3.723,
+    "deviation": 0.0
+   },
+   {
+    "code": "sz159915",
+    "date": "2026-09-22",
+    "baseRaw": 3.42,
+    "archiveRaw": 3.42,
+    "deviation": 0.0
+   },
+   {
+    "code": "sz159915",
+    "date": "2026-11-03",
+    "baseRaw": 2.403,
+    "archiveRaw": 2.403,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh510300",
+    "date": "2026-06-08",
+    "baseRaw": 4.739,
+    "archiveRaw": 4.739,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh510300",
+    "date": "2026-07-14",
+    "baseRaw": 4.837,
+    "archiveRaw": 4.837,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh510300",
+    "date": "2026-08-18",
+    "baseRaw": 4.787,
+    "archiveRaw": 4.787,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh510300",
+    "date": "2026-09-22",
+    "baseRaw": 4.613,
+    "archiveRaw": 4.613,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh510300",
+    "date": "2026-11-03",
+    "baseRaw": 4.092,
+    "archiveRaw": 4.092,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh513310",
+    "date": "2026-06-08",
+    "baseRaw": 5.254,
+    "archiveRaw": 5.254,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh513310",
+    "date": "2026-07-14",
+    "baseRaw": 5.66,
+    "archiveRaw": 5.66,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh513310",
+    "date": "2026-08-18",
+    "baseRaw": 5.054,
+    "archiveRaw": 5.054,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh513310",
+    "date": "2026-09-22",
+    "baseRaw": 4.937,
+    "archiveRaw": 4.937,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh513310",
+    "date": "2026-11-03",
+    "baseRaw": 3.671,
+    "archiveRaw": 3.671,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh510050",
+    "date": "2026-06-08",
+    "baseRaw": 2.901,
+    "archiveRaw": 2.901,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh510050",
+    "date": "2026-07-14",
+    "baseRaw": 3.058,
+    "archiveRaw": 3.058,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh510050",
+    "date": "2026-08-18",
+    "baseRaw": 3.047,
+    "archiveRaw": 3.047,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh510050",
+    "date": "2026-09-22",
+    "baseRaw": 3.015,
+    "archiveRaw": 3.015,
+    "deviation": 0.0
+   },
+   {
+    "code": "sh510050",
+    "date": "2026-11-03",
+    "baseRaw": 2.884,
+    "archiveRaw": 2.884,
+    "deviation": 0.0
+   }
+  ]
+ },
+ "splice": {
+  "symbolsChecked": 58,
+  "maxDiffPp": 0.148,
+  "maxDailyRet": 0.08833,
+  "worst": [
+   {
+    "code": "sh601899",
+    "name": "紫金矿业",
+    "prev": "2026-06-05",
+    "join": "2026-06-08",
+    "joinRet": -0.05332,
+    "qfqRet": -0.0548,
+    "diffPp": 0.148
+   },
+   {
+    "code": "sh510500",
+    "name": "中证500ETF南方",
+    "prev": "2026-06-05",
+    "join": "2026-06-08",
+    "joinRet": -0.0325,
+    "qfqRet": -0.03309,
+    "diffPp": 0.059
+   },
+   {
+    "code": "sz300413",
+    "name": "芒果超媒",
+    "prev": "2026-06-05",
+    "join": "2026-06-08",
+    "joinRet": -0.02881,
+    "qfqRet": -0.02927,
+    "diffPp": 0.046
+   },
+   {
+    "code": "sh601398",
+    "name": "工商银行",
+    "prev": "2026-06-05",
+    "join": "2026-06-08",
+    "joinRet": 0.0218,
+    "qfqRet": 0.02225,
+    "diffPp": -0.045
+   },
+   {
+    "code": "sh601138",
+    "name": "工业富联",
+    "prev": "2026-06-05",
+    "join": "2026-06-08",
+    "joinRet": -0.04834,
+    "qfqRet": -0.04877,
+    "diffPp": 0.043
+   }
+  ],
+  "fullWindowDriftPp": {
+   "median": -0.14,
+   "maxAbs": 6.72,
+   "worst": [
+    {
+     "code": "sh601398",
+     "name": "工商银行",
+     "driftPp": -6.72
+    },
+    {
+     "code": "sh600036",
+     "name": "招商银行",
+     "driftPp": -5.19
+    },
+    {
+     "code": "sh688256",
+     "name": "寒武纪",
+     "driftPp": 5.02
+    },
+    {
+     "code": "sh600519",
+     "name": "贵州茅台",
+     "driftPp": -3.88
+    },
+    {
+     "code": "sh603259",
+     "name": "药明康德",
+     "driftPp": -3.11
+    }
+   ]
+  }
+ },
+ "baseArtifact": {
+  "format": "raw OHLC+amount，共享日期索引，json.gz",
+  "start": "2025-11-03",
+  "end": "2026-06-05",
+  "dates": 143,
+  "symbols": 58,
+  "rawBytes": 314214,
+  "gzipBytes": 129065,
+  "fetchSeconds": 16.0,
+  "archiveReadSeconds": 1.1,
+  "adjustSeconds": 0.02,
+  "dailyRebuildSeconds": 1.12,
+  "buildSeconds": 19.1
+ }
+}
