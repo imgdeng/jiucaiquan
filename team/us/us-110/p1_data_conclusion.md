@@ -137,3 +137,47 @@ python services/market-data/backfill_history.py --report
 | 资产错分 | 0 例；`600519`=stock，`510300`=etf |
 
 **判定：P-1 通过，允许 3m 档出数；6m / 12m 置灰。**
+
+## 附录：个股回补执行结果（2026-11-04，非阻塞项）
+
+> 本附录不影响上面的 P-1 判定；本周页面仍只出 `3m` 档。回补只写入 `services/market-data/cache/history/`（已 gitignore），未改 archive、未重跑排行榜、未触发行情提交。
+
+| 项 | 结果 |
+|----|------|
+| 回补区间（个股） | **2025-10-31 ~ 2026-11-03，244 个交易日** |
+| 回补区间（ETF，沿用前次） | 2025-11-03 ~ 2026-11-03，243 个交易日 |
+| 两类共同可用区间 | **2025-11-03 ~ 2026-11-03，243 个交易日**（满足 12m 的 240 门槛，余量 3 天） |
+| 回补标的 | **7,180 只**（个股 5,569 + 非债券 ETF 1,611） |
+| 抓取失败 | **0 只**（三批日志均为 `fail=0`） |
+| 空数据 | **0 只** |
+| ≥240 个交易日 | **6,453 只**（个股 5,224 / ETF 1,229）→ 可支撑 12m 档 |
+| 120 ~ 239 日 | 434 只（可支撑 6m） |
+| 60 ~ 119 日 | 148 只（仅 3m） |
+| <60 日 | 145 只（不得入池） |
+| 缓存体积 | 95MB（可复跑，不入库） |
+
+**可扩到的区间**：统一口径下为 `2025-11-03 ~ 2026-11-03`（243 个交易日），个股单独可到 `2025-10-31`。243 距 240 仅 3 天余量，若在 26.11.2 正式启用 12m 档，建议把 ETF 也回补到 `2025-10-31`（约 5.5 分钟）后统一以 244 日起算。
+
+**复核命令**：
+
+```bash
+python services/market-data/backfill_history.py --kind stock --start 2025-10-31
+python services/market-data/backfill_history.py --report
+python - <<'PY'
+import json
+from pathlib import Path
+m=json.load(open("services/market-data/cache/history/_manifest.json"))
+c=Path("services/market-data/cache/history")
+n={"empty":0,"ge240":0,"ge120":0,"ge60":0,"lt60":0}
+for code,e in m.items():
+    rows=json.loads((c/e["kind"]/f"{code}.json").read_text())["rows"]
+    k=len(rows)
+    if k==0: n["empty"]+=1
+    elif k>=240: n["ge240"]+=1
+    elif k>=120: n["ge120"]+=1
+    elif k>=60: n["ge60"]+=1
+    else: n["lt60"]+=1
+print(len(m), n)
+PY
+```
+
