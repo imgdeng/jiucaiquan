@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-04T13:32:43+08:00",
+ "generatedAt": "2026-11-04T14:19:43+08:00",
  "source": "apps/web/public/data/archive（本地=远程 origin/main 285b486）",
  "range": {
   "dataStart": "2026-06-08",
@@ -51,20 +51,11 @@
   }
  },
  "pool": {
-  "rule": "ETF 按末日成交额降序且剔除债券/货币类；个股按末日成交额降序；每类取前 30 只可用标的",
-  "etfCount": 30,
+  "rule": "ETF 按末日成交额降序、剔除货币/债券类后取前 29 只（511880 剔除后不递补）；个股按末日成交额降序取前 30 只",
+  "etfCount": 29,
   "stockCount": 30,
-  "total": 60,
+  "total": 59,
   "symbols": [
-   {
-    "code": "sh511880",
-    "name": "银华日利ETF",
-    "kind": "etf",
-    "days": 99,
-    "driftPp": 0.0,
-    "priceGap": 0.0,
-    "ret3mQfq": 0.42
-   },
    {
     "code": "sh588000",
     "name": "科创50ETF华夏",
@@ -595,6 +586,612 @@
     "driftPp": -2.81,
     "priceGap": 0.0185,
     "ret3mQfq": 74.62
+   }
+  ]
+ },
+ "moneyBondEtf": {
+  "keywords": [
+   "债",
+   "货币",
+   "现金",
+   "添益",
+   "理财",
+   "短融",
+   "国债",
+   "日利",
+   "添利",
+   "保证金",
+   "收益快线",
+   "快线",
+   "财富宝",
+   "存单",
+   "政金",
+   "金融债",
+   "利率债",
+   "信用债",
+   "可转债",
+   "转债"
+  ],
+  "excludedCount": 110,
+  "newlyCaughtCount": 4,
+  "newlyCaught": [
+   {
+    "code": "sh511880",
+    "name": "银华日利ETF",
+    "amount": 25922752111.0
+   },
+   {
+    "code": "sh511850",
+    "name": "招商财富宝ETF",
+    "amount": 40126822.0
+   },
+   {
+    "code": "sz159003",
+    "name": "招商快线ETF",
+    "amount": 6831501.0
+   },
+   {
+    "code": "sh511820",
+    "name": "鹏华添利ETF",
+    "amount": 10000.0
+   }
+  ],
+  "removedFromPreviousPool": [
+   {
+    "code": "sh511880",
+    "name": "银华日利ETF"
+   }
+  ],
+  "excludedCodes": [
+   {
+    "code": "sh511360",
+    "name": "短融ETF海富通",
+    "amount": 70150673267.0
+   },
+   {
+    "code": "sh511880",
+    "name": "银华日利ETF",
+    "amount": 25922752111.0
+   },
+   {
+    "code": "sh511990",
+    "name": "华宝添益ETF",
+    "amount": 17794362316.0
+   },
+   {
+    "code": "sh511070",
+    "name": "公司债ETF南方",
+    "amount": 11737548269.0
+   },
+   {
+    "code": "sh551550",
+    "name": "科创债ETF华夏",
+    "amount": 8618180342.0
+   },
+   {
+    "code": "sh511380",
+    "name": "可转债ETF博时",
+    "amount": 8435125056.0
+   },
+   {
+    "code": "sz159113",
+    "name": "科创债ETF大成",
+    "amount": 6321880060.0
+   },
+   {
+    "code": "sz159700",
+    "name": "科创债ETF南方",
+    "amount": 5829723354.0
+   },
+   {
+    "code": "sh551030",
+    "name": "科创债ETF鹏华",
+    "amount": 4866805279.0
+   },
+   {
+    "code": "sh511090",
+    "name": "30年国债ETF鹏扬",
+    "amount": 4851257802.0
+   },
+   {
+    "code": "sh511190",
+    "name": "信用债ETF海富通",
+    "amount": 4755140627.0
+   },
+   {
+    "code": "sh551500",
+    "name": "科创债ETF易方达",
+    "amount": 4353895298.0
+   },
+   {
+    "code": "sh511110",
+    "name": "公司债ETF易方达",
+    "amount": 4249645080.0
+   },
+   {
+    "code": "sh511010",
+    "name": "国债ETF国泰",
+    "amount": 4113817638.0
+   },
+   {
+    "code": "sh511220",
+    "name": "城投债ETF海富通",
+    "amount": 4057970700.0
+   },
+   {
+    "code": "sh511100",
+    "name": "国债ETF华夏",
+    "amount": 3627061756.0
+   },
+   {
+    "code": "sh551800",
+    "name": "科创债ETF国泰",
+    "amount": 3424435639.0
+   },
+   {
+    "code": "sz159600",
+    "name": "科创债ETF嘉实",
+    "amount": 3378886767.0
+   },
+   {
+    "code": "sh511130",
+    "name": "30年国债ETF博时",
+    "amount": 3325777137.0
+   },
+   {
+    "code": "sz159111",
+    "name": "科创债ETF天弘",
+    "amount": 2662944910.0
+   },
+   {
+    "code": "sh511180",
+    "name": "可转债ETF海富通",
+    "amount": 2528860023.0
+   },
+   {
+    "code": "sh511120",
+    "name": "科创债ETF广发",
+    "amount": 2383827197.0
+   },
+   {
+    "code": "sh511200",
+    "name": "信用债ETF华夏",
+    "amount": 2185736757.0
+   },
+   {
+    "code": "sh551060",
+    "name": "科创债ETF中银",
+    "amount": 2094428324.0
+   },
+   {
+    "code": "sz159816",
+    "name": "0-4年地方债ETF鹏华",
+    "amount": 2060541715.0
+   },
+   {
+    "code": "sh511520",
+    "name": "政金债ETF富国",
+    "amount": 2013255148.0
+   },
+   {
+    "code": "sh551560",
+    "name": "科创债ETF兴业",
+    "amount": 2001533161.0
+   },
+   {
+    "code": "sh551510",
+    "name": "科创债ETF华泰柏瑞",
+    "amount": 1951370503.0
+   },
+   {
+    "code": "sz159115",
+    "name": "科创债ETF华安",
+    "amount": 1654820676.0
+   },
+   {
+    "code": "sh551520",
+    "name": "科创债ETF汇添富",
+    "amount": 1621615535.0
+   },
+   {
+    "code": "sh511270",
+    "name": "10年地方债ETF海富通",
+    "amount": 1586156705.0
+   },
+   {
+    "code": "sz159649",
+    "name": "国开债ETF华安",
+    "amount": 1483257354.0
+   },
+   {
+    "code": "sh511260",
+    "name": "十年国债ETF国泰",
+    "amount": 1478206873.0
+   },
+   {
+    "code": "sz159395",
+    "name": "信用债ETF大成",
+    "amount": 1427339722.0
+   },
+   {
+    "code": "sz159397",
+    "name": "信用债ETF广发",
+    "amount": 1361163059.0
+   },
+   {
+    "code": "sz159112",
+    "name": "科创债ETF银华",
+    "amount": 1318825680.0
+   },
+   {
+    "code": "sh511030",
+    "name": "公司债ETF平安",
+    "amount": 1284766053.0
+   },
+   {
+    "code": "sz159398",
+    "name": "信用债ETF天弘",
+    "amount": 1231751654.0
+   },
+   {
+    "code": "sh511020",
+    "name": "国债ETF平安",
+    "amount": 1217169475.0
+   },
+   {
+    "code": "sz159200",
+    "name": "科创债ETF富国",
+    "amount": 1199669166.0
+   },
+   {
+    "code": "sz159972",
+    "name": "5年地方债ETF鹏华",
+    "amount": 1166602546.0
+   },
+   {
+    "code": "sh511580",
+    "name": "国债政金债ETF招商",
+    "amount": 1136709909.0
+   },
+   {
+    "code": "sz159400",
+    "name": "科创债ETF景顺",
+    "amount": 968797408.0
+   },
+   {
+    "code": "sz159110",
+    "name": "科创债ETF万家",
+    "amount": 905412990.0
+   },
+   {
+    "code": "sh511150",
+    "name": "科创债ETF永赢",
+    "amount": 847303624.0
+   },
+   {
+    "code": "sh551580",
+    "name": "科创债ETF泰康",
+    "amount": 638264930.0
+   },
+   {
+    "code": "sz159001",
+    "name": "货币ETF易方达",
+    "amount": 610595291.0
+   },
+   {
+    "code": "sz159396",
+    "name": "信用债ETF博时",
+    "amount": 559083544.0
+   },
+   {
+    "code": "sh551300",
+    "name": "科创债ETF摩根",
+    "amount": 470124733.0
+   },
+   {
+    "code": "sz159651",
+    "name": "国开债ETF平安",
+    "amount": 320990648.0
+   },
+   {
+    "code": "sz159201",
+    "name": "自由现金流ETF华夏",
+    "amount": 307783837.0
+   },
+   {
+    "code": "sz159116",
+    "name": "科创债ETF工银",
+    "amount": 282473617.0
+   },
+   {
+    "code": "sz159650",
+    "name": "国开债ETF博时",
+    "amount": 281680990.0
+   },
+   {
+    "code": "sh511060",
+    "name": "5年地方债ETF海富通",
+    "amount": 266209355.0
+   },
+   {
+    "code": "sh551900",
+    "name": "科创债ETF招商",
+    "amount": 265320486.0
+   },
+   {
+    "code": "sh511660",
+    "name": "货币ETF建信",
+    "amount": 176097365.0
+   },
+   {
+    "code": "sz159232",
+    "name": "自由现金流ETF南方",
+    "amount": 165572009.0
+   },
+   {
+    "code": "sh551000",
+    "name": "科创债ETF博时",
+    "amount": 148665943.0
+   },
+   {
+    "code": "sz159222",
+    "name": "自由现金流ETF易方达",
+    "amount": 143779943.0
+   },
+   {
+    "code": "sz159399",
+    "name": "现金流ETF国泰",
+    "amount": 140560978.0
+   },
+   {
+    "code": "sz159233",
+    "name": "自由现金流ETF平安",
+    "amount": 81912360.0
+   },
+   {
+    "code": "sh563760",
+    "name": "现金流ETF中银",
+    "amount": 76011155.0
+   },
+   {
+    "code": "sh511700",
+    "name": "货币ETF平安",
+    "amount": 75095890.0
+   },
+   {
+    "code": "sz159235",
+    "name": "中证现金流ETF大成",
+    "amount": 74469173.0
+   },
+   {
+    "code": "sh562080",
+    "name": "300现金流ETF华宝",
+    "amount": 41962758.0
+   },
+   {
+    "code": "sh511850",
+    "name": "招商财富宝ETF",
+    "amount": 40126822.0
+   },
+   {
+    "code": "sh563390",
+    "name": "现金流ETF华泰柏瑞",
+    "amount": 32601629.0
+   },
+   {
+    "code": "sh511160",
+    "name": "国债ETF东财",
+    "amount": 32205746.0
+   },
+   {
+    "code": "sh563900",
+    "name": "300自由现金流ETF摩根",
+    "amount": 30004936.0
+   },
+   {
+    "code": "sz159221",
+    "name": "现金流ETF嘉实",
+    "amount": 22560608.0
+   },
+   {
+    "code": "sh511620",
+    "name": "货币ETF国泰",
+    "amount": 18785219.0
+   },
+   {
+    "code": "sh560120",
+    "name": "中证500现金流ETF华夏",
+    "amount": 15574240.0
+   },
+   {
+    "code": "sh561420",
+    "name": "300现金流ETF汇添富",
+    "amount": 15007913.0
+   },
+   {
+    "code": "sh511810",
+    "name": "货币ETF南方",
+    "amount": 10701935.0
+   },
+   {
+    "code": "sh563770",
+    "name": "全指现金流ETF招商",
+    "amount": 10372329.0
+   },
+   {
+    "code": "sz159229",
+    "name": "自由现金流ETF广发",
+    "amount": 9921994.0
+   },
+   {
+    "code": "sh563580",
+    "name": "自由现金流800ETF万家",
+    "amount": 7925446.0
+   },
+   {
+    "code": "sz159003",
+    "name": "招商快线ETF",
+    "amount": 6831501.0
+   },
+   {
+    "code": "sh511900",
+    "name": "富国货币ETF",
+    "amount": 6444853.0
+   },
+   {
+    "code": "sh516460",
+    "name": "现金流ETF800鹏华",
+    "amount": 6301113.0
+   },
+   {
+    "code": "sh562170",
+    "name": "沪深300现金流ETF易方达",
+    "amount": 6064896.0
+   },
+   {
+    "code": "sh563680",
+    "name": "800现金流ETF汇添富",
+    "amount": 5690307.0
+   },
+   {
+    "code": "sh563990",
+    "name": "800现金流ETF富国",
+    "amount": 5509018.0
+   },
+   {
+    "code": "sz159236",
+    "name": "自由现金流ETF工银",
+    "amount": 5463179.0
+   },
+   {
+    "code": "sh511650",
+    "name": "货币ETF华夏",
+    "amount": 5120807.0
+   },
+   {
+    "code": "sz159223",
+    "name": "现金流ETF永赢",
+    "amount": 4933632.0
+   },
+   {
+    "code": "sz159119",
+    "name": "800现金流ETF招商",
+    "amount": 4462454.0
+   },
+   {
+    "code": "sz159166",
+    "name": "现金流ETF长城",
+    "amount": 2817564.0
+   },
+   {
+    "code": "sh561080",
+    "name": "全指现金流ETF华安",
+    "amount": 2462954.0
+   },
+   {
+    "code": "sh511690",
+    "name": "交易货币ETF大成",
+    "amount": 2396611.0
+   },
+   {
+    "code": "sh516040",
+    "name": "300现金流ETF华夏",
+    "amount": 2320393.0
+   },
+   {
+    "code": "sh511800",
+    "name": "易方达货币ETF",
+    "amount": 1840219.0
+   },
+   {
+    "code": "sh511860",
+    "name": "货币ETF博时",
+    "amount": 1790049.0
+   },
+   {
+    "code": "sz159276",
+    "name": "现金流ETF汇添富",
+    "amount": 1681936.0
+   },
+   {
+    "code": "sh563780",
+    "name": "现金流全指ETF方正富邦",
+    "amount": 1629737.0
+   },
+   {
+    "code": "sz159225",
+    "name": "现金流ETF银华",
+    "amount": 1559524.0
+   },
+   {
+    "code": "sh563620",
+    "name": "全指现金流ETF兴业",
+    "amount": 1343269.0
+   },
+   {
+    "code": "sh511960",
+    "name": "货币ETF嘉实",
+    "amount": 1219999.0
+   },
+   {
+    "code": "sh563830",
+    "name": "全指现金流ETF博时",
+    "amount": 830141.0
+   },
+   {
+    "code": "sh511770",
+    "name": "金鹰增益货币ETF",
+    "amount": 469993.0
+   },
+   {
+    "code": "sh512130",
+    "name": "全指现金流ETF鹏华",
+    "amount": 339233.0
+   },
+   {
+    "code": "sh511980",
+    "name": "货币ETF汇添富",
+    "amount": 310414.0
+   },
+   {
+    "code": "sh561870",
+    "name": "现金流全指ETF华富",
+    "amount": 266965.0
+   },
+   {
+    "code": "sh511920",
+    "name": "货币ETF广发",
+    "amount": 198900.0
+   },
+   {
+    "code": "sh511950",
+    "name": "添利货币ETF广发",
+    "amount": 170000.0
+   },
+   {
+    "code": "sh511970",
+    "name": "国寿货币ETF",
+    "amount": 90000.0
+   },
+   {
+    "code": "sh511930",
+    "name": "货币ETF国联",
+    "amount": 50000.0
+   },
+   {
+    "code": "sh511910",
+    "name": "融通货币ETF",
+    "amount": 40000.0
+   },
+   {
+    "code": "sh511830",
+    "name": "货币ETF华泰柏瑞",
+    "amount": 30300.0
+   },
+   {
+    "code": "sh511820",
+    "name": "鹏华添利ETF",
+    "amount": 10000.0
    }
   ]
  },
