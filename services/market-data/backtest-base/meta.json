@@ -1,0 +1,140 @@
+{
+ "file": "history_base.json",
+ "generatedAt": "2026-11-04T16:29:07+08:00",
+ "generator": "services/market-data/build_backtest_base.py",
+ "sources": {
+  "cache": "services/market-data/cache/history/",
+  "archive": "apps/web/public/data/archive/",
+  "pool": "team/us/us-110/p1_evidence.json"
+ },
+ "coverage": {
+  "start": "2025-10-31",
+  "end": "2026-06-05",
+  "tradingDays": 144,
+  "poolSymbols": 59,
+  "symbolsInBase": 58,
+  "perSymbolDays": {
+   "min": 135,
+   "median": 143.0,
+   "max": 144
+  },
+  "daysBySymbol": {
+   "sh510050": 143,
+   "sh510300": 143,
+   "sh510310": 143,
+   "sh510330": 143,
+   "sh510500": 143,
+   "sh512050": 143,
+   "sh512100": 143,
+   "sh512880": 143,
+   "sh513050": 143,
+   "sh513090": 143,
+   "sh513120": 143,
+   "sh513130": 143,
+   "sh513180": 143,
+   "sh513310": 143,
+   "sh513330": 143,
+   "sh518880": 143,
+   "sh560010": 143,
+   "sh563360": 143,
+   "sh588000": 143,
+   "sh588080": 143,
+   "sh600030": 144,
+   "sh600036": 144,
+   "sh600183": 144,
+   "sh600487": 144,
+   "sh600519": 144,
+   "sh601138": 144,
+   "sh601398": 144,
+   "sh601899": 144,
+   "sh603259": 144,
+   "sh603986": 144,
+   "sh688008": 144,
+   "sh688012": 135,
+   "sh688041": 144,
+   "sh688256": 144,
+   "sh688498": 144,
+   "sh688981": 144,
+   "sz000725": 144,
+   "sz002371": 144,
+   "sz002384": 144,
+   "sz002463": 144,
+   "sz002475": 144,
+   "sz159338": 143,
+   "sz159352": 143,
+   "sz159361": 143,
+   "sz159792": 143,
+   "sz159845": 143,
+   "sz159915": 143,
+   "sz159919": 143,
+   "sz159949": 143,
+   "sz159952": 143,
+   "sz300059": 144,
+   "sz300223": 144,
+   "sz300274": 144,
+   "sz300308": 144,
+   "sz300408": 144,
+   "sz300413": 144,
+   "sz300476": 144,
+   "sz300750": 144
+  },
+  "skipped": [
+   {
+    "code": "sh688825",
+    "name": "长鑫科技",
+    "reason": "底座区间无数据（尚未上市）"
+   }
+  ]
+ },
+ "priceBasis": {
+  "value": "qfq_anchored_to_archive",
+  "explain": "本地 cache 为 AkShare qfq；按 archive 首个重叠日（2026-06-08）的原始价做常数缩放，使底座与 archive raw 在拼接点连续。日收益口径为前复权。",
+  "adjustFunction": "build_leaderboard.adjust_price_series",
+  "consumerNote": "构建时把底座与 archive 统一交给 adjust_price_series；不得再对底座做额外缩放。"
+ },
+ "validation": {
+  "spliceMaxDiffPp": 0.0,
+  "driftVsQfqPp": {
+   "median": 0.0,
+   "maxAbs": 2.85,
+   "worst": {
+    "code": "sh600036",
+    "driftPp": -2.85
+   }
+  },
+  "auditRawBaseRef": {
+   "median": -0.14,
+   "maxAbs": 6.72,
+   "note": "12m_audit.json 的 raw 底座口径，用于对照；本次底座实测更小"
+  }
+ },
+ "constraints": {
+  "noFullPool12m": "不得写“全池 12 个月”；12m 仅 57/59 只满足 240 日",
+  "insufficient": [
+   {
+    "code": "sh688012",
+    "name": "中微公司",
+    "days": 235,
+    "gap": 5
+   },
+   {
+    "code": "sh688825",
+    "name": "长鑫科技",
+    "days": 66,
+    "gap": 174
+   }
+  ],
+  "tiers": {
+   "2w": "59/59",
+   "4w": "59/59",
+   "6m": "58/59",
+   "9m": "58/59",
+   "12m": "57/59"
+  }
+ },
+ "consumerContract": {
+  "path": "services/market-data/backtest-base/history_base.json",
+  "missingFile": "必须抛错（FileNotFoundError）并终止构建，禁止静默跳过",
+  "schema": "dates 为共享日期索引；symbols[code].start 为首日下标；rows 与 dates 逐日对齐，停牌日为 null"
+ }
+}
