@@ -24,12 +24,29 @@ DATA_DIR = ROOT / "apps" / "web" / "public" / "data"
 EVIDENCE_PATH = ROOT / "team" / "us" / "us-110" / "p1_evidence.json"
 
 sys.path.insert(0, str(SERVICE_DIR))
-from build_leaderboard import adjust_price_series, is_bond_etf, price_limit  # noqa: E402
+from build_leaderboard import adjust_price_series, price_limit  # noqa: E402
+
+# 货币/债券类 ETF 名称关键词（比 build_leaderboard.is_bond_etf 更全，含货币基金常见命名）
+MONEY_BOND_KEYWORDS = (
+    "债", "货币", "现金", "添益", "理财", "短融", "国债",
+    "日利", "添利", "保证金", "收益快线", "快线", "财富宝", "存单",
+    "政金", "金融债", "利率债", "信用债", "可转债", "转债",
+)
+LEGACY_MONEY_BOND_KEYWORDS = ("债", "货币", "现金", "添益", "理财", "短融", "国债")
 
 MIN_DAYS_3M = 60
 DRIFT_LIMIT_PP = 3.0
 GAP_LIMIT = 0.05
-POOL_PER_KIND = 30
+# ETF 固定 29 只：剔除货币类 511880 后不递补，避免冻结期引入新标的
+POOL_LIMITS = {"etf": 29, "stock": 30}
+
+
+def matched_keywords(name: str, keywords: tuple[str, ...]) -> list[str]:
+    return [k for k in keywords if k in name]
+
+
+def is_money_bond_etf(name: str) -> bool:
+    return bool(matched_keywords(name, MONEY_BOND_KEYWORDS))
 
 
 def read_json(path: Path):
@@ -104,17 +121,27 @@ def main() -> int:
                 residual.append({"code": code, "name": names[code], "kind": kind,
                                  "maxDailyRet": round(worst, 4)})
 
-    # 候选池：末日成交额降序（ETF 先剔除债券/货币类）
+    # 候选池：末日成交额降序（ETF 先剔除货币/债券类）
     last = snaps[real[-1]]
     stock_pool = sorted([x for x in last[0] if x.get("amount")], key=lambda x: -x["amount"])
-    etf_pool = sorted([x for x in last[1] if x.get("amount") and not is_bond_etf(x.get("name", ""))],
-                      key=lambda x: -x["amount"])
+    etf_universe = sorted([x for x in last[1] if x.get("amount")], key=lambda x: -x["amount"])
+    money_bond_all = [{"code": x["code"], "name": x["name"], "amount": x.get("amount")}
+                      for x in etf_universe if is_money_bond_etf(x["name"])]
+    newly_caught = [{"code": x["code"], "name": x["name"], "amount": x.get("amount")}
+                    for x in etf_universe
+                    if is_money_bond_etf(x["name"])
+                    and not matched_keywords(x["name"], LEGACY_MONEY_BOND_KEYWORDS)]
+    legacy_top = [x for x in etf_universe
+                  if not matched_keywords(x["name"], LEGACY_MONEY_BOND_KEYWORDS)][:30]
+    removed_from_pool = [{"code": x["code"], "name": x["name"]}
+                         for x in legacy_top if is_money_bond_etf(x["name"])]
+    etf_pool = [x for x in etf_universe if not is_money_bond_etf(x["name"])]
     pool_rows, excluded = [], []
     for kind, items, series, names in (("etf", etf_pool, etfs, etf_names),
                                        ("stock", stock_pool, stocks, stock_names)):
         taken = 0
         for item in items:
-            if taken >= POOL_PER_KIND:
+            if taken >= POOL_LIMITS[kind]:
                 break
             code, name = item["code"], str(item.get("name") or "").strip()
             px = series.get(code, {})
@@ -194,11 +221,19 @@ def main() -> int:
             },
         },
         "pool": {
-            "rule": f"ETF 按末日成交额降序且剔除债券/货币类；个股按末日成交额降序；每类取前 {POOL_PER_KIND} 只可用标的",
+            "rule": "ETF 按末日成交额降序、剔除货币/债券类后取前 29 只（511880 剔除后不递补）；个股按末日成交额降序取前 30 只",
             "etfCount": len(pool_etf),
             "stockCount": len(pool_stock),
             "total": len(pool_rows),
             "symbols": pool_rows,
+        },
+        "moneyBondEtf": {
+            "keywords": list(MONEY_BOND_KEYWORDS),
+            "excludedCount": len(money_bond_all),
+            "newlyCaughtCount": len(newly_caught),
+            "newlyCaught": newly_caught,
+            "removedFromPreviousPool": removed_from_pool,
+            "excludedCodes": money_bond_all,
         },
         "excluded": excluded,
         "insufficientSymbols": insufficient,
@@ -212,6 +247,8 @@ def main() -> int:
           f"ETF {len(etfs)} 只，≥60 日 {payload['coverage']['etfWith60Days']}")
     print(f"资产错分（股票/ETF 代码重叠）：{len(both)}；600519 in stock={payload['assetClassification']['sh600519InStock']}")
     print(f"复权后仍超限标的：{len(residual)}")
+    print(f"货币/债券类 ETF：排除 {len(money_bond_all)} 只，新命中 {len(newly_caught)} 只，"
+          f"本次从池中移除 {len(removed_from_pool)} 只")
     print(f"候选池：ETF {len(pool_etf)} + 个股 {len(pool_stock)} = {len(pool_rows)}；剔除 {len(excluded)}")
     print(f"证据写入 {EVIDENCE_PATH}")
     return 0
