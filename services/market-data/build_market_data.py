@@ -46,7 +46,12 @@ def fetch_with_fallback(
     prefix: str,
     output_path: Path,
     allow_live: bool,
-) -> tuple[int, str | None]:
+) -> tuple[int, bool, str | None]:
+    """返回 (可用条数, 本次是否抓到新数据, 错误信息)。
+
+    抓取失败且无 CSV 兜底时，不覆盖 output_path 的既有快照，
+    条数按既有文件统计，fresh=False，避免 status 误报 0 条。
+    """
     errors: list[str] = []
     quotes: list[QuoteSnapshot] = []
 
@@ -63,22 +68,29 @@ def fetch_with_fallback(
             errors.append(f"csv fallback failed: {exc}")
 
     if not quotes:
-        return 0, "; ".join(errors) or "live fetch failed and no csv fallback available"
+        return existing_count(output_path), False, "; ".join(errors) or "live fetch failed and no csv fallback available"
 
     write_json_atomic(output_path, quote_payload(quotes))
-    return len(quotes), None
+    return len(quotes), True, None
 
 
-def build_status(output_dir: Path, stock_count: int, etf_count: int, errors: list[str]) -> None:
+def build_status(output_dir: Path, stock_count: int, etf_count: int, errors: list[str],
+                 fully_fresh: bool) -> None:
     now = now_china_iso()
+    status_path = output_dir / "data-status.json"
+    previous_last_success = None
+    try:
+        previous_last_success = json.loads(status_path.read_text(encoding="utf-8")).get("lastSuccessAt")
+    except (OSError, json.JSONDecodeError):
+        pass
     status = {
         "generatedAt": now,
-        "lastSuccessAt": now if stock_count or etf_count else None,
+        "lastSuccessAt": now if fully_fresh else previous_last_success,
         "stockCount": stock_count,
         "etfCount": etf_count,
         "errors": errors,
     }
-    write_json_atomic(output_dir / "data-status.json", status)
+    write_json_atomic(status_path, status)
 
 
 def archive_snapshot(output_dir: Path, today_str: str) -> None:
@@ -100,9 +112,10 @@ def run(args: argparse.Namespace) -> int:
     errors: list[str] = []
     stock_count = existing_count(output_dir / "stock-latest.json")
     etf_count = existing_count(output_dir / "etf-latest.json")
+    stock_fresh = etf_fresh = False
 
     if args.command in ("fetch-stock", "build-market-data"):
-        stock_count, error = fetch_with_fallback(
+        stock_count, stock_fresh, error = fetch_with_fallback(
             fetch_stock_from_akshare,
             source_dir / "stock_data",
             "stock_",
@@ -114,7 +127,7 @@ def run(args: argparse.Namespace) -> int:
         print(f"stock output: {output_dir / 'stock-latest.json'} count={stock_count}")
 
     if args.command in ("fetch-etf", "build-market-data"):
-        etf_count, error = fetch_with_fallback(
+        etf_count, etf_fresh, error = fetch_with_fallback(
             fetch_etf_from_akshare,
             source_dir / "etf_data",
             "etf_",
@@ -125,10 +138,20 @@ def run(args: argparse.Namespace) -> int:
             errors.append(f"etf: {error}")
         print(f"etf output: {output_dir / 'etf-latest.json'} count={etf_count}")
 
-    build_status(output_dir, stock_count, etf_count, errors)
+    if args.command == "fetch-stock":
+        all_fresh = stock_fresh
+    elif args.command == "fetch-etf":
+        all_fresh = etf_fresh
+    else:
+        all_fresh = stock_fresh and etf_fresh
+
+    build_status(output_dir, stock_count, etf_count, errors, all_fresh)
 
     if args.archive:
-        archive_snapshot(output_dir, datetime.now(CHINA_TZ).date().isoformat())
+        if all_fresh:
+            archive_snapshot(output_dir, datetime.now(CHINA_TZ).date().isoformat())
+        else:
+            print("archive skipped: snapshot is stale/partial", file=sys.stderr)
 
     if errors:
         print("warnings:", " | ".join(errors), file=sys.stderr)
