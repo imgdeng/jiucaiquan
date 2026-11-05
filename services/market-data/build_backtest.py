@@ -903,8 +903,19 @@ def run_build(data_dir: Path, index_only: bool, base_path: Path = BASE_FILE) -> 
     expected = evidence.get("range", {})
     actual = (archive_dates[0] if archive_dates else None, archive_dates[-1] if archive_dates else None, len(archive_dates))
     wanted = (expected.get("dataStart"), expected.get("dataEnd"), expected.get("tradingDays"))
-    if actual != wanted:
+    expected_days = int(expected.get("tradingDays") or 0)
+    # P-1 证据冻结在 dataEnd；archive 会随快照日更向后追加。
+    # 校验 P-1 区间必须原样保留（起点一致、前 N 个交易日末日一致），只允许尾部追加。
+    if (
+        not archive_dates
+        or archive_dates[0] != expected.get("dataStart")
+        or expected_days <= 0
+        or len(archive_dates) < expected_days
+        or archive_dates[expected_days - 1] != expected.get("dataEnd")
+    ):
         raise SystemExit(f"archive 交易日历与 P-1 不一致：actual={actual}, p1={wanted}")
+    if len(archive_dates) > expected_days:
+        print(f"[backtest] archive 较 P-1 追加 {len(archive_dates) - expected_days} 个新快照：{archive_dates[expected_days]} ~ {archive_dates[-1]}")
     print(f"[backtest] archive 交易日过滤：{len(archive_dates)} 天（剔除 {len(fake_dates)} 个非交易日假快照）")
 
     base = load_base(base_path)
