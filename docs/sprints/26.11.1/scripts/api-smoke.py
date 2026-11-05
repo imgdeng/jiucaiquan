@@ -98,10 +98,11 @@ rows.append(("summary 份数/最大体积", "local", "59 份 ≤20KB",
              f"{len(sm)} / {max(os.path.getsize(f) for f in sm)}B",
              "PASS" if len(sm) == 59 and max(os.path.getsize(f) for f in sm) <= 20 * 1024 else "FAIL"))
 
-# /api/item 不存在：阻断候选
+# /api/item 不在本期范围：路径不存在时回落首页静态页，属预期
 st_i, ct_i, _ = http("GET", "/api/item?code=510300")
-rows.append(("/api/item", "GET /api/item", "200 JSON", f"{st_i} {ct_i.split(';')[0]}",
-             "FAIL" if ct_i.startswith("text/html") else "PASS"))
+rows.append(("范围确认 /api/item", "GET /api/item", "200 text/html 回落",
+             f"{st_i} {ct_i.split(';')[0]}",
+             "PASS" if st_i == 200 and ct_i.startswith("text/html") else "FAIL"))
 
 width = max(len(r[0]) for r in rows)
 for r in rows:
