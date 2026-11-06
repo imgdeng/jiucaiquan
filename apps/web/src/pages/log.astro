@@ -5,8 +5,13 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   <section class="mx-auto max-w-4xl px-4 py-10">
     <p class="text-sm font-semibold text-leaf">Build in public</p>
     <h1 class="mt-2 text-3xl font-bold md:text-5xl">迭代日志</h1>
-    <p class="mt-3 text-sm text-stone-600">最后更新 2026-11-04</p>
+    <p class="mt-3 text-sm text-stone-600">最后更新 2026-11-06</p>
     <div class="mt-8 space-y-4">
+      <article class="rounded-lg border border-line bg-white p-6">
+        <p class="text-sm text-stone-600">2026-11-06</p>
+        <h2 class="mt-2 text-xl font-bold">回测标的扩到全量 7,180 只：搜索不再按成交额截断</h2>
+        <p class="mt-3 leading-8 text-stone-700">修复搜索结果只覆盖成交额前 59 只的问题（us-116）：标的池改为 7,180 只（ETF 1,611 + 个股 5,569）全部可检索，成交额只决定默认排序，不再决定能否被搜到；六档数字（10/20/60/120/180/240 个交易日）全量产出，逐笔与权益曲线只覆盖成交额前 300 只，其余标的在明细区给出明确说明。512170 医疗 ETF 六档均可用，其中 12 个月档 34 笔、胜率 61.8%、累计收益率 +19.74%、最大回撤 13.34%，页面可直接核对（历史统计，不代表未来收益，不构成推荐）。全量后每日仓库增量约 5.5MB，回测底座一次性 33.6MB。</p>
+      </article>
       <article class="rounded-lg border border-line bg-white p-6">
         <p class="text-sm text-stone-600">2026-11-04</p>
         <h2 class="mt-2 text-xl font-bold">首页改版：回测提到首屏主位，右侧换成「今日工具台」</h2>
