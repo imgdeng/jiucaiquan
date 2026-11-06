@@ -24,8 +24,45 @@ type PoolItem = {
   name: string;
   asset: AssetType;
   amount: number;
-  summary: string;
+  /** 六档可用交易日数，顺序同 WINDOW_ORDER */
+  days?: number[];
 };
+
+type UniverseDoc = {
+  schemaVersion: number;
+  latestDate: string;
+  count: number;
+  assetStats: { etf: number; stock: number };
+  codes: string;
+  names: string;
+  assets: string;
+  amounts: number[];
+  days: string;
+};
+
+const B36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+function decodeDays(text: string): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < text.length; i += 2) {
+    const high = B36.indexOf(text[i]);
+    const low = B36.indexOf(text[i + 1]);
+    out.push(high < 0 || low < 0 ? 0 : high * 36 + low);
+  }
+  return out;
+}
+
+function decodeUniverse(doc: UniverseDoc): PoolItem[] {
+  const codes = doc.codes.match(/.{6}/g) ?? [];
+  const names = doc.names.split("|");
+  return codes.map((code, index) => ({
+    code,
+    name: names[index] ?? code,
+    asset: doc.assets[index] === "e" ? "etf" : "stock",
+    amount: (doc.amounts[index] ?? 0) * 1_000_000,
+    days: decodeDays(doc.days.slice(index * 12, index * 12 + 12)),
+  }));
+}
 
 type StrategyMeta = {
   id: string;
@@ -65,9 +102,10 @@ type BacktestIndex = {
   strategy: StrategyMeta;
   methodology?: Methodology;
   windows: WindowMeta[];
-  poolStats: { total: number; etf: number; stock: number };
+  universe: { path: string; count: number; etf: number; stock: number; maxBytes: number; gzipMaxBytes: number };
+  top: PoolItem[];
+  detailTop: number;
   distribution?: Partial<Record<WindowKey, Distribution>>;
-  pool: PoolItem[];
 };
 
 type WindowResult = {
@@ -94,6 +132,8 @@ type SummaryData = {
   asset: AssetType;
   latestDate: string;
   strategy: StrategyMeta;
+  hasDetail: boolean;
+  days?: number[];
   windows: Partial<Record<WindowKey, WindowResult>>;
 };
 
@@ -208,7 +248,9 @@ export default function BacktestTool() {
   const [summaryState, setSummaryState] = useState<"idle" | "loading" | "ready" | "missing">("idle");
   const [detailOpen, setDetailOpen] = useState(false);
   const [detail, setDetail] = useState<DetailData | null>(null);
-  const [detailState, setDetailState] = useState<"idle" | "loading" | "ready" | "missing">("idle");
+  const [detailState, setDetailState] = useState<"idle" | "loading" | "ready" | "missing" | "unavailable">("idle");
+  const [universe, setUniverse] = useState<PoolItem[] | null>(null);
+  const [universeState, setUniverseState] = useState<"idle" | "loading" | "ready" | "missing">("idle");
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
 
@@ -216,6 +258,7 @@ export default function BacktestTool() {
   const detailCache = useRef(new Map<string, DetailData>());
   const requestId = useRef(0);
   const detailRequestId = useRef(0);
+  const universeRequest = useRef(0);
   const didPageView = useRef(false);
   const lastResult = useRef("");
   const lastDetailView = useRef("");
@@ -241,20 +284,40 @@ export default function BacktestTool() {
     });
   }, []);
 
-  const pool = index?.pool ?? [];
+  // universe 延迟加载：首屏只用 index.top 的 30 只，输入搜索词时才拉全量清单
+  async function loadUniverse() {
+    if (universe || universeState === "loading") return;
+    const id = ++universeRequest.current;
+    setUniverseState("loading");
+    const data = await loadJson<UniverseDoc>("/data/backtest/universe.json");
+    if (id !== universeRequest.current) return;
+    if (!data) {
+      setUniverseState("missing");
+      return;
+    }
+    setUniverse(decodeUniverse(data));
+    setUniverseState("ready");
+  }
+
+  useEffect(() => {
+    if (query.trim()) void loadUniverse();
+  }, [query]);
+
+  const top = index?.top ?? [];
   const windows = index?.windows ?? STATIC_WINDOWS;
   // 只渲染真正可用的档位：不可用档位不出现按钮，也不出现“数据积累中”占位
   const availableWindows = windows.filter((w) => w.available);
 
   const matches = useMemo(() => {
     const keyword = query.trim().toLowerCase();
-    if (!keyword) return pool.slice(0, 12);
-    return pool
+    if (!keyword) return top.slice(0, 12);
+    if (!universe) return [];
+    return universe
       .filter((item) => `${item.code} ${item.name}`.toLowerCase().includes(keyword))
       .slice(0, 20);
-  }, [pool, query]);
+  }, [top, universe, query]);
 
-  const queryHasNoMatch = query.trim().length > 0 && matches.length === 0;
+  const queryHasNoMatch = query.trim().length > 0 && universe !== null && matches.length === 0;
 
   async function selectItem(item: PoolItem) {
     setSelected(item);
@@ -272,7 +335,7 @@ export default function BacktestTool() {
       }
       return;
     }
-    const data = await loadJson<SummaryData>(`/data/backtest/${item.summary}`);
+    const data = await loadJson<SummaryData>(`/data/backtest/summary/${item.code}.json`);
     if (id !== requestId.current) return;
     if (!data) {
       setSummaryState("missing");
@@ -292,6 +355,10 @@ export default function BacktestTool() {
     setDetailOpen(true);
     const payload = { code: selected.code, asset: selected.asset, window: windowKey };
     track("backtest_detail_expand", payload);
+    if (!summary?.hasDetail) {
+      setDetailState("unavailable");
+      return;
+    }
     if (detailState === "ready" && detail?.code === selected.code) {
       markDetailViewed();
       return;
@@ -377,7 +444,7 @@ export default function BacktestTool() {
         <section className="min-w-0 rounded-lg border border-line bg-white p-5 shadow-sm">
           <h2 className="text-xl font-bold">选择标的与区间</h2>
           <p className="mt-1 text-sm text-stone-600">
-            标的池固定，按末日成交额排序（仅代表成交活跃度，不构成任何投资暗示）；不提供自由输入参数。
+            覆盖本期有行情的全部标的（{index?.universe.count ?? 0} 只），默认按末日成交额排序（仅代表成交活跃度，不构成任何投资暗示）。
           </p>
 
           <label className="mt-5 block text-sm font-semibold" htmlFor="backtest-search">
@@ -391,23 +458,24 @@ export default function BacktestTool() {
             onKeyDown={(e) => {
               if (e.key === "Enter" && matches[0]) selectItem(matches[0]);
             }}
-            placeholder={controlsDisabled ? "标的池准备中" : "例如 510300 / 沪深300"}
+            placeholder={controlsDisabled ? "标的数据准备中" : "例如 512170 / 医疗ETF"}
             disabled={controlsDisabled}
           />
 
-          <div className="mt-3 max-h-80 overflow-auto rounded-md border border-line">
+          <div className="mt-3 max-h-80 overflow-auto rounded-md border border-line" data-sort="turnover">
             {loadState === "pending" ? (
               <div className="space-y-2 p-4 text-sm leading-6 text-stone-600">
-                <p>回测数据准备中，标的池暂未开放。</p>
+                <p>回测数据准备中，标的全集暂未开放。</p>
                 <p>数据前置结论完成后，本页会自动读取预计算文件，无需改代码。</p>
               </div>
             ) : loadState === "loading" ? (
-              <p className="p-4 text-sm text-stone-600">正在读取标的池…</p>
+              <p className="p-4 text-sm text-stone-600">正在读取标的清单…</p>
             ) : matches.length ? (
               matches.map((item) => (
                 <button
                   key={item.code}
                   type="button"
+                  data-symbol={item.code}
                   onClick={() => selectItem(item)}
                   className={`grid min-h-[44px] w-full grid-cols-[1fr_auto] items-center gap-2 border-b border-line px-3 py-3 text-left last:border-b-0 hover:bg-rice ${
                     selected?.code === item.code ? "bg-rice" : ""
@@ -423,11 +491,13 @@ export default function BacktestTool() {
                 </button>
               ))
             ) : queryHasNoMatch ? (
-              <p className="p-4 text-sm leading-6 text-stone-600">
-                暂未覆盖该标的（标的池共 {index?.poolStats.total ?? 0} 只）。
-              </p>
+              <p className="p-4 text-sm leading-6 text-stone-600">该标的本期无行情数据。</p>
+            ) : query.trim() && universeState === "loading" ? (
+              <p className="p-4 text-sm text-stone-600">正在读取标的清单…</p>
+            ) : query.trim() && universeState === "missing" ? (
+              <p className="p-4 text-sm text-stone-600">标的清单暂不可用，请稍后重试。</p>
             ) : (
-              <p className="p-4 text-sm text-stone-600">标的池暂无数据。</p>
+              <p className="p-4 text-sm text-stone-600">暂无可展示的标的。</p>
             )}
           </div>
 
@@ -571,7 +641,11 @@ export default function BacktestTool() {
 
               {detailOpen && (
                 <div className="mt-4 rounded-md border border-line p-4">
-                  {detailState === "loading" ? (
+                  {detailState === "unavailable" ? (
+                    <p className="text-sm leading-6 text-stone-600">
+                      该标的逐笔明细暂仅对成交额前 {index?.detailTop ?? 300} 只提供，六档统计数字不受影响。
+                    </p>
+                  ) : detailState === "loading" ? (
                     <p className="text-sm text-stone-600">正在读取逐笔明细…</p>
                   ) : detailState === "missing" ? (
                     <p className="text-sm text-stone-600">该标的逐笔明细暂不可用。</p>

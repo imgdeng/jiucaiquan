@@ -148,3 +148,34 @@ AC-5（静态/性能/体积）与 AC-7（合规）的最终结论留项目马复
 ### 9.5 待确认
 
 - 底座 meta 现已拆分为两组漂移口径：页面披露组 `driftVsQfqPp`（锚定后，中位 0.0pp / 最大 2.85pp，招商银行 600036），仅核查组 `driftVsQfqRawBase`（未缩放，-0.14pp / 6.72pp，工商银行 601398）；页面只消费前者。
+
+## 10. us-116 全量 universe 热修（2026-11-06）
+
+### 10.1 池 → universe
+
+- 可检索集合改为数据底座中的全部有行情标的：**7,180 只**（ETF 1,611 / 个股 5,569），成交额只用于默认排序，不作准入；不再做货币/债券 ETF 过滤与 disk 回读断言。
+- 底座固定读取 `services/market-data/backtest-base/history_base_all.json`（与 `meta_all.json`，约 32MB）；缺失即 `FileNotFoundError`，构建以退出码 4 终止，不静默降级。
+- `universe.json` 与 `index.json` 分离：`index.json` 仅含 window/methodology/distribution/top30；`universe.json` 为紧凑并行结构（定长 code 串 + 竖线 name 串 + base36 六档可用日数）。
+
+### 10.2 体积与产物（实测）
+
+| 产物 | 实测 | 预算 |
+|---|---|---|
+| `index.json` | 7,281B | ≤150KB |
+| `universe.json` raw | 264,915B | ≤300KB |
+| `universe.json` gzip | 68,945B | ≤80KB |
+| 单标的 summary | 7,180 个，单档摘要 <2KB | ≤20KB/个 |
+| 单档 detail | 300 只 × 6 档，单档 ≤6KB | ≤6KB/档 |
+| detail 合计 | 2,920,807B | ≤12MB |
+
+- 构建耗时：**real 13.93s / user 11.46s**（全量 7,180 × 6 档），远低于 5 分钟目标，无需拆分 workflow。
+- 幂等：连续两次构建全部 JSON 除 `generatedAt` 外差异为 0。
+
+### 10.3 覆盖与自测
+
+- 档位可用标的数：3m 7,145/7,180、2w 7,160、4w 7,119、6m 6,690、9m 6,368、12m 6,165；缺口文案按前 5 只 + 「等 N 只」截断，避免 index 膨胀。
+- 512170（医疗ETF华宝）：六档全部可用（10/20/60/120/180/240），12m 胜率 61.8%、累计 +19.74%、最大回撤 13.34%（34 笔）。
+- 非前 300（300613 富瀚微，成交额排名 301）：六档数字正常；逐笔区固定文案「该标的逐笔明细暂仅对成交额前 300 只提供」。
+- 长鑫科技（688825）：3m/2w/4w 可用，6m/9m/12m 均提示「可用 66 个交易日」。
+- 默认列表 `index.top` 30 只按末日成交额降序；搜索经 `universe.json` 延迟加载，首屏不请求。
+- 393 / 375 真实视口（CDP device metrics）`scrollWidth == innerWidth`，无横向溢出；禁用词 TOP/热门/推荐在构建页 0 命中。

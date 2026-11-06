@@ -19,6 +19,7 @@ team/us/us-110/p1_data_conclusion.md 与 p1_evidence.json 缺失时，脚本以�
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import sys
 from datetime import datetime
@@ -37,15 +38,17 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATA_DIR = ROOT / "apps" / "web" / "public" / "data"
 GATE_FILE = ROOT / "team" / "us" / "us-110" / "p1_data_conclusion.md"
 P1_EVIDENCE = ROOT / "team" / "us" / "us-110" / "p1_evidence.json"
-BASE_FILE = ROOT / "services" / "market-data" / "backtest-base" / "history_base.json"
-BASE_META_FILE = ROOT / "services" / "market-data" / "backtest-base" / "meta.json"
-BASE_MAX_BYTES = 350_000
+BASE_FILE = ROOT / "services" / "market-data" / "backtest-base" / "history_base_all.json"
+BASE_META_FILE = ROOT / "services" / "market-data" / "backtest-base" / "meta_all.json"
+BASE_MAX_BYTES = 42_000_000
 OUT_DIR_NAME = "backtest"
 
 SCHEMA_VERSION = 1
-POOL_MIN_TOTAL = 50
-POOL_MIN_PER_ASSET = 25
-FORCED_CODES = (("510300", "etf"), ("600519", "stock"))
+# us-116：可检索集合 = 数据侧有行情全集，成交额只决定默认排序，不作准入。
+POOL_TOP_DETAIL = 300
+POOL_TOP_LIST = 30
+UNIVERSE_MAX_BYTES = 300_000
+UNIVERSE_GZIP_MAX_BYTES = 80_000
 
 # 档位名义窗口、最低交易日门槛（01_req.md §3.1 / us-113 FR-5）
 # (key, label, 名义交易日数, 最低门槛)
@@ -79,7 +82,7 @@ NOTIONAL_PER_TRADE = 10_000.0
 INDEX_MAX_BYTES = 150_000
 SUMMARY_MAX_BYTES = 20_000
 DETAIL_WINDOW_MAX_BYTES = 6_000
-DETAIL_TOTAL_MAX_BYTES = 800_000
+DETAIL_TOTAL_MAX_BYTES = 12_000_000
 # 内测收益排序（noindex 路由）：只纳入平仓笔数 ≥ 5 的标的，最多 10 行
 RANKING_MIN_TRADES = 5
 RANKING_LIMIT = 10
@@ -261,20 +264,14 @@ def merge_base(
     return combined, stock_out, etf_out
 
 
-def build_coverage(dates: list[str], windows: list[dict], bars: dict[str, dict[str, dict]], pool: list[dict]) -> dict[str, dict]:
-    """统计每个档位下“可用交易日数 ≥ 门槛”的标的数量与缺口清单。"""
+def build_coverage(windows: list[dict], universe: list[dict]) -> dict[str, dict]:
+    """按标的预计算的各档可用日数，统计可用标的数与缺口清单。"""
     coverage: dict[str, dict] = {}
-    for window in windows:
-        if window["start"] is None:
-            coverage[window["key"]] = {"ok": 0, "shortfall": []}
-            continue
-        start_idx = dates.index(window["start"])
-        end_idx = dates.index(window["end"])
-        window_dates = dates[start_idx : end_idx + 1]
+    for index, window in enumerate(windows):
         shortfall = []
         ok = 0
-        for item in pool:
-            days = sum(1 for day in window_dates if day in bars[item["code"]])
+        for item in universe:
+            days = item["days"][index]
             if days >= window["minTradingDays"]:
                 ok += 1
             else:
@@ -327,81 +324,90 @@ def load_money_bond_keywords(evidence: dict) -> tuple[str, ...]:
     return keywords
 
 
-def build_pool(evidence: dict, leaderboard: dict, keywords: tuple[str, ...]) -> list[dict]:
-    """固定标的池：代入 P-1 证据池，显式排除货币/债券类 ETF，并按末日成交额降序。
+def build_universe(
+    base: dict,
+    stock_panel: dict[str, dict],
+    etf_panel: dict[str, dict],
+    dates: list[str],
+    latest_amounts: dict[str, int],
+) -> list[dict]:
+    """us-116：universe = 数据底座中的全部标的；成交额只用于排序，不作准入。
 
-    P-1 已完成成交额头部筛选、异常标的剔除与“不足 60 日”剔除；这里只做代入与校验，
-    不重新推导，避免与书面结论产生第二套口径。
+    每只标的携带六档“可用交易日数”，供前端按标的级门槛提示。
     """
-    pool_symbols = evidence.get("pool", {}).get("symbols", [])
-    excluded = {normalize_code(item.get("code")) for item in evidence.get("excluded", [])}
+    panels = {"stock": panel_by_norm_code(stock_panel), "etf": panel_by_norm_code(etf_panel)}
+    total = len(dates)
+    window_slices: list[list[str]] = []
+    for _, _, nominal_days, _ in WINDOWS:
+        span = min(nominal_days, total)
+        window_slices.append(dates[total - span :])
 
-    rows_by_code: dict[str, dict] = {}
-    for row in leaderboard.get("stocks", []) + leaderboard.get("etfs", []):
-        code = normalize_code(row.get("code"))
-        if code:
-            rows_by_code[code] = row
-
-    pool: list[dict] = []
-    for symbol in pool_symbols:
-        code = normalize_code(symbol.get("code"))
-        if not code:
+    universe: list[dict] = []
+    for raw_code, entry in base["symbols"].items():
+        code = normalize_code(raw_code)
+        asset = str(entry.get("asset") or "")
+        if not code or asset not in panels:
             continue
-        if code in excluded:
-            raise SystemExit(f"P-1 已剔除标的仍在池内：{code}")
-        if int(symbol.get("days") or 0) < 60:
-            raise SystemExit(f"P-1 标的不足 60 个交易日，不得入池：{code} ({symbol.get('days')} 日)")
-        row = rows_by_code.get(code)
-        name = str(symbol.get("name") or (row or {}).get("name") or code).strip()
-        asset = str(symbol.get("kind") or "").strip()
-        if asset == "etf" and any(keyword in name for keyword in keywords):
-            print(f"[backtest] 排除货币/债券类 ETF：{code} {name}", file=sys.stderr)
+        found = panels[asset].get(code)
+        if not found:
             continue
-        pool.append(
+        px = found[1].get("px") or {}
+        if not px:
+            continue
+        days = [sum(1 for day in window_dates if day in px) for window_dates in window_slices]
+        universe.append(
             {
                 "code": code,
-                "name": name,
+                "name": str(entry.get("name") or found[1].get("name") or code).strip(),
                 "asset": asset,
-                "amount": int(round(float((row or {}).get("amount") or 0))),
+                "amount": int(latest_amounts.get(code) or 0),
+                "days": days,
                 "summary": f"summary/{code}.json",
             }
         )
 
-    # D3：默认排序 = 末日成交额降序，仅代表成交活跃度
-    pool.sort(key=lambda x: (-x["amount"], x["code"]))
-    pool_stats = {
-        "total": len(pool),
-        "etf": sum(1 for item in pool if item["asset"] == "etf"),
-        "stock": sum(1 for item in pool if item["asset"] == "stock"),
-    }
-    if pool_stats["total"] < POOL_MIN_TOTAL or pool_stats["etf"] < POOL_MIN_PER_ASSET or pool_stats["stock"] < POOL_MIN_PER_ASSET:
-        raise SystemExit(
-            "标的池不满足门槛："
-            f"total={pool_stats['total']} (需≥{POOL_MIN_TOTAL}), "
-            f"etf={pool_stats['etf']} / stock={pool_stats['stock']} (各需≥{POOL_MIN_PER_ASSET})"
-        )
-    for forced_code, forced_asset in FORCED_CODES:
-        item = next((x for x in pool if x["code"] == forced_code), None)
-        if not item or item["asset"] != forced_asset:
-            raise SystemExit(f"P-1 标的池缺少必备标的：{forced_code} ({forced_asset})")
-
-    return pool
+    # 默认排序 = 末日成交额降序，仅代表成交活跃度，不构成推荐
+    universe.sort(key=lambda item: (-item["amount"], item["code"]))
+    return universe
 
 
-def assert_no_money_bond_leak(index_path: Path, keywords: tuple[str, ...]) -> None:
-    """产物回读断言：重新读取落盘的 index.json，确认池内没有货币/债券类 ETF 残留。
+_B36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-    与过滤逻辑分开取值：前者写内存池，后者从磁盘回读，避免“同谓词同列表、断言恒空”。
+
+def encode_days36(days: list[int]) -> str:
+    """六档可用日数压成 12 字符 base36（0 表示该档不可用），控制 universe 体积。"""
+    out = []
+    for value in days[:6]:
+        bounded = min(max(int(value), 0), 36 * 36 - 1)
+        out.append(_B36[bounded // 36] + _B36[bounded % 36])
+    return "".join(out)
+
+
+def build_universe_doc(universe: list[dict], latest_date: str) -> dict:
+    """紧凑并行结构：7,180 只也满足 raw ≤300KB / gzip ≤80KB。
+
+    codes 用逗号串、names 用竖线串、days 用定长 12 字符串，避免 JSON 引号与逗号开销。
     """
-    index = json.loads(index_path.read_text(encoding="utf-8"))
-    leaked = [
-        item
-        for item in index.get("pool", [])
-        if item.get("asset") == "etf" and any(keyword in str(item.get("name") or "") for keyword in keywords)
-    ]
-    if leaked:
-        detail = ", ".join(f"{item['code']} {item['name']}" for item in leaked)
-        raise SystemExit(f"产物回读发现货币/债券类 ETF 仍在池内：{detail}")
+    names = [item["name"] for item in universe]
+    if any("|" in name for name in names):
+        raise SystemExit("universe 名称含竖线，无法使用紧凑串行编码")
+    return {
+        "schemaVersion": SCHEMA_VERSION,
+        "latestDate": latest_date,
+        "count": len(universe),
+        "assetStats": {
+            "etf": sum(1 for item in universe if item["asset"] == "etf"),
+            "stock": sum(1 for item in universe if item["asset"] == "stock"),
+        },
+        "fields": ["code", "name", "asset", "amountMillion", "days36"],
+        # 定长 6 位 code 直接拼接；名称用竖线分隔
+        "codes": "".join(item["code"] for item in universe),
+        "names": "|".join(names),
+        "assets": "".join("e" if item["asset"] == "etf" else "s" for item in universe),
+        "amounts": [int(round(item["amount"] / 1_000_000)) for item in universe],
+        "days": "".join(encode_days36(item["days"]) for item in universe),
+    }
+
 
 
 def build_windows(
@@ -438,8 +444,9 @@ def build_windows(
                         None
                         if detail["shortfall"] == []
                         else f"{detail['ok']}/{sample or total} 只满足 {min_days} 个交易日；"
-                        + "、".join(f"{row['name']} {row['days']} 日" for row in detail["shortfall"])
-                        + f"，数据不足，故{label}档对上述 {len(detail['shortfall'])} 只标的不适用"
+                        + "、".join(f"{row['name']} {row['days']} 日" for row in detail["shortfall"][:5])
+                        + (f" 等 {len(detail['shortfall'])} 只" if len(detail["shortfall"]) > 5 else "")
+                        + f"，数据不足，故{label}档对上述标的不适用"
                     ),
                     "reason": None if detail["ok"] >= -(-(sample or total) // 2) else "可用标的不足",
                 }
@@ -461,7 +468,7 @@ def build_windows(
 
 def build_index(
     dates: list[str],
-    pool: list[dict],
+    universe: list[dict],
     generated_at: str,
     distribution: dict | None = None,
     windows: list[dict] | None = None,
@@ -476,12 +483,26 @@ def build_index(
         "strategy": STRATEGY_META,
         "methodology": methodology or {},
         "windows": windows if windows is not None else build_windows(dates),
-        "poolStats": {
-            "total": len(pool),
-            "etf": sum(1 for item in pool if item["asset"] == "etf"),
-            "stock": sum(1 for item in pool if item["asset"] == "stock"),
+        "universe": {
+            "path": "universe.json",
+            "count": len(universe),
+            "etf": sum(1 for item in universe if item["asset"] == "etf"),
+            "stock": sum(1 for item in universe if item["asset"] == "stock"),
+            "maxBytes": UNIVERSE_MAX_BYTES,
+            "gzipMaxBytes": UNIVERSE_GZIP_MAX_BYTES,
         },
-        "pool": pool,
+        "detailTop": POOL_TOP_DETAIL,
+        # 兼容首页 IA 读取的字段名（语义已改为全量 universe 统计）
+        "poolStats": {
+            "total": len(universe),
+            "etf": sum(1 for item in universe if item["asset"] == "etf"),
+            "stock": sum(1 for item in universe if item["asset"] == "stock"),
+        },
+        # 首屏默认列表：仅用成交额前 30，搜索走 universe 延迟加载
+        "top": [
+            {"code": item["code"], "name": item["name"], "asset": item["asset"], "amount": item["amount"]}
+            for item in universe[:POOL_TOP_LIST]
+        ],
     }
     if distribution:
         index["distribution"] = distribution
@@ -496,58 +517,53 @@ def round_price(value: float, digits: int) -> float:
     return float(Decimal(str(value)).quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP))
 
 
-def build_bars(
-    pool: list[dict],
-    dates: list[str],
+def make_bar_builder(
     stocks_by_date: dict[str, dict],
     etfs_by_date: dict[str, dict],
     stock_panel: dict[str, dict],
     etf_panel: dict[str, dict],
-) -> dict[str, dict[str, dict]]:
-    """为池内标的组装前复权 OHLC。
+):
+    """返回按需构建单标的复权 OHLC 的函数，避免一次把 7,180 只全部驻留内存。
 
-    archive 的 `latest` 是当日收盘价（`close` 字段为昨收，不能用于当日 K 线）；
-    先用 build_panel 得到的复权收盘价求出复权因子，再同比例修正 high/low/open。
+    archive 的 `latest` 是当日收盘价；先用复权收盘价求因子，再同比例修正 high/low/open。
     """
-    raw_maps: dict[str, dict[str, str]] = {
-        "stock": {code: raw for code, (raw, _) in panel_by_norm_code(stock_panel).items()},
-        "etf": {code: raw for code, (raw, _) in panel_by_norm_code(etf_panel).items()},
-    }
     panels = {"stock": stock_panel, "etf": etf_panel}
-    by_dates = {"stock": stocks_by_date, "etf": etfs_by_date}
+    norm = {"stock": panel_by_norm_code(stock_panel), "etf": panel_by_norm_code(etf_panel)}
+    snapshots = {
+        "stock": {day: {str(it.get("code")): it for it in items} for day, items in stocks_by_date.items()},
+        "etf": {day: {str(it.get("code")): it for it in items} for day, items in etfs_by_date.items()},
+    }
 
-    bars: dict[str, dict[str, dict]] = {item["code"]: {} for item in pool}
-    for item in pool:
-        code = item["code"]
-        asset = item["asset"]
-        raw = raw_maps[asset].get(code)
-        if not raw:
+    def series_for(code: str, asset: str) -> dict[str, dict]:
+        found = norm[asset].get(code)
+        if not found:
             raise SystemExit(f"标的不在 {asset} 行情面板：{code}")
-        panel = panels[asset].get(raw)
-        if not panel:
-            raise SystemExit(f"标的不在 {asset} 行情面板：{code}")
-        for date, items in by_dates[asset].items():
-            snapshot = next((it for it in items if str(it.get("code")) == raw), None)
+        raw, panel = found
+        px = panel.get("px") or {}
+        by_day = snapshots[asset]
+        bars: dict[str, dict] = {}
+        for date, adj_close in px.items():
+            snapshot = by_day.get(date, {}).get(raw)
             if not snapshot:
                 continue
-            adj_close = panel.get("px", {}).get(date)
-            raw_close = snapshot.get("latest")
-            if adj_close is None or not raw_close:
-                continue
-            factor = float(adj_close) / float(raw_close)
+            factor = float(adj_close) / float(snapshot["latest"]) if snapshot.get("latest") else 1.0
             high = snapshot.get("high")
             low = snapshot.get("low")
             open_price = snapshot.get("open")
-            bars[code][date] = {
+            bars[date] = {
                 "open": float(open_price) * factor if open_price else float(adj_close),
                 "high": float(high) * factor if high else float(adj_close),
                 "low": float(low) * factor if low else float(adj_close),
                 "close": float(adj_close),
             }
-    return bars
+        return bars
+
+    return series_for
 
 
-def simulate_window(series: dict[str, dict], dates: list[str], window: dict, asset: str) -> tuple[dict, dict | None]:
+def simulate_window(
+    series: dict[str, dict], dates: list[str], window: dict, asset: str, with_detail: bool = True
+) -> tuple[dict, dict | None]:
     """按 01_req.md §4 的冻结规则执行串行单仓模拟。
 
     返回 (摘要结果, 逐笔明细)。两者同源计算：逐笔 pnl 之和 = 摘要累计收益率，
@@ -670,7 +686,8 @@ def simulate_window(series: dict[str, dict], dates: list[str], window: dict, ass
         if candidate is not None and last_close is not None:
             floating = NOTIONAL_PER_TRADE * (last_close / candidate["buy"] - 1)
         equity_index = 100.0 + (realized + floating) / (NOTIONAL_PER_TRADE / 100)
-        equity.append(round(equity_index, 1))  # 曲线展示精度 0.1；终点单独保 2 位
+        if with_detail:
+            equity.append(round(equity_index, 1))  # 曲线展示精度 0.1；终点单独保 2 位
         if equity_index > peak:
             peak = equity_index
             peak_idx = idx
@@ -681,7 +698,7 @@ def simulate_window(series: dict[str, dict], dates: list[str], window: dict, ass
             max_dd_trough_idx = idx
 
     # 终点由 pnlTotal 推导，保证 100 + cumReturn 与曲线末点完全一致（差异来自独立取整，非口径）
-    if equity:
+    if with_detail and equity:
         equity[-1] = round(100 + cum_return, 2)
 
     result = {
@@ -689,6 +706,7 @@ def simulate_window(series: dict[str, dict], dates: list[str], window: dict, ass
         "start": window["start"],
         "end": window["end"],
         "tradingDays": window["tradingDays"],
+        "availableTradingDays": available_days,
         "trades": trades_count,
         "wins": wins,
         "winRate": win_rate,
@@ -699,6 +717,9 @@ def simulate_window(series: dict[str, dict], dates: list[str], window: dict, ass
         ),
         "reason": None,
     }
+
+    if not with_detail:
+        return result, None
 
     detail = {
         "start": window["start"],
@@ -735,7 +756,7 @@ def simulate_window(series: dict[str, dict], dates: list[str], window: dict, ass
     return result, detail
 
 
-def build_summary(item: dict, dates: list[str], results: dict[str, dict], generated_at: str) -> dict:
+def build_summary(item: dict, dates: list[str], results: dict[str, dict], generated_at: str, has_detail: bool) -> dict:
     return {
         "schemaVersion": SCHEMA_VERSION,
         "generatedAt": generated_at,
@@ -744,6 +765,7 @@ def build_summary(item: dict, dates: list[str], results: dict[str, dict], genera
         "asset": item["asset"],
         "latestDate": dates[-1],
         "strategy": STRATEGY_META,
+        "hasDetail": has_detail,
         "windows": results,
     }
 
@@ -938,16 +960,23 @@ def run_build(data_dir: Path, index_only: bool, base_path: Path = BASE_FILE) -> 
                 if code and it.get("latest"):
                     raw_closes.setdefault(code, {})[day] = float(it["latest"])
 
+    latest_amounts: dict[str, int] = {}
+    for it in list(stocks_by_date.get(archive_dates[-1], [])) + list(etfs_by_date.get(archive_dates[-1], [])):
+        code = normalize_code(it.get("code"))
+        if code:
+            latest_amounts[code] = int(round(float(it.get("amount") or 0)))
+
     stock_panel = build_panel(dates, stocks_by_date, "stock")
     etf_panel = build_panel(dates, etfs_by_date, "etf")
-    keywords = load_money_bond_keywords(evidence)
-    pool = build_pool(evidence, leaderboard, keywords)
+    universe = build_universe(base, stock_panel, etf_panel, dates, latest_amounts)
+    if not universe:
+        raise SystemExit("universe 为空：底座与 archive 未产出任何可用标的")
 
     base_meta = load_base_meta()
     drift = (base_meta.get("validation") or {}).get("driftVsQfqPp") or {}
     worst = drift.get("worst") or {}
     worst_name = next(
-        (item["name"] for item in pool if item["code"] == normalize_code(worst.get("code"))), worst.get("code")
+        (item["name"] for item in universe if item["code"] == normalize_code(worst.get("code"))), worst.get("code")
     )
     methodology = {
         "priceAdjustment": "前复权（比率复权；底座与 archive 拼接后统一走 adjust_price_series，不二次缩放）",
@@ -960,40 +989,16 @@ def run_build(data_dir: Path, index_only: bool, base_path: Path = BASE_FILE) -> 
     }
 
     generated_at = datetime.now().astimezone().isoformat(timespec="seconds")
-    bars = build_bars(pool, dates, stocks_by_date, etfs_by_date, stock_panel, etf_panel)
-    assert_splice_continuity(bars, dates, archive_dates, raw_closes)
+    series_for = make_bar_builder(stocks_by_date, etfs_by_date, stock_panel, etf_panel)
+    sample_bars = {
+        code: series_for(code, "etf" if code in ("510300", "510050") else "stock")
+        for code in ("510300", "600519", "300750")
+    }
+    assert_splice_continuity(sample_bars, dates, archive_dates, raw_closes)
 
     pre_windows = build_windows(dates)
-    coverage = build_coverage(dates, pre_windows, bars, pool)
-    windows = build_windows(dates, coverage, len(pool))
-    # 底座 meta 是覆盖口径的权威来源：档位可用数、缺口标的与天数按 meta 声明写入文案
-    constraints = base_meta.get("constraints") or {}
-    declared_insufficient = {
-        normalize_code(row.get("code")): row
-        for row in (constraints.get("insufficient") or [])
-        if normalize_code(row.get("code"))
-    }
-    for window in windows:
-        tier = (constraints.get("tiers") or {}).get(window["key"])
-        if not tier or "/" not in str(tier):
-            continue
-        ok_text, total_text = str(tier).split("/", 1)
-        shortfall = [
-            row
-            for row in declared_insufficient.values()
-            if int(row.get("days") or 0) < window["minTradingDays"]
-        ]
-        window["availableSymbols"] = int(ok_text)
-        window["sample"] = int(total_text)
-        window["available"] = int(ok_text) >= -(-int(total_text) // 2)
-        shortfall.sort(key=lambda row: (-int(row.get("days") or 0), str(row.get("code"))))
-        window["coverageNote"] = (
-            None
-            if not shortfall
-            else f"{ok_text}/{total_text} 只满足 {window['minTradingDays']} 个交易日；"
-            + "、".join(f"{row.get('name')} {row.get('days')} 日" for row in shortfall)
-            + f"，数据不足，故{window['label']}档对上述 {len(shortfall)} 只标的不适用"
-        )
+    coverage = build_coverage(pre_windows, universe)
+    windows = build_windows(dates, coverage, len(universe))
     print(
         "  档位可用标的数: "
         + " / ".join(f"{w['key']}={w['availableSymbols']}/{w['sample']}" for w in windows)
@@ -1003,46 +1008,50 @@ def run_build(data_dir: Path, index_only: bool, base_path: Path = BASE_FILE) -> 
     summary_dir = out_dir / "summary"
     detail_dir = out_dir / "detail"
     internal_dir = out_dir / "internal"
+    universe_doc = build_universe_doc(universe, dates[-1])
+    universe_bytes = len(dump_bytes(universe_doc))
+    if universe_bytes > UNIVERSE_MAX_BYTES:
+        raise SystemExit(f"universe.json 超预算：{universe_bytes}B > {UNIVERSE_MAX_BYTES}B")
+    gzip_bytes = len(gzip.compress(dump_bytes(universe_doc), compresslevel=9))
+    if gzip_bytes > UNIVERSE_GZIP_MAX_BYTES:
+        raise SystemExit(f"universe.json gzip 超预算：{gzip_bytes}B > {UNIVERSE_GZIP_MAX_BYTES}B")
 
     if index_only:
-        index = build_index(dates, pool, generated_at, windows=windows, methodology=methodology)
+        index = build_index(dates, universe, generated_at, windows=windows, methodology=methodology)
         assert_budget(index, INDEX_MAX_BYTES, "index.json")
+        write_json_atomic(out_dir / "universe.json", universe_doc)
         write_json_atomic(out_dir / "index.json", index)
-        assert_no_money_bond_leak(out_dir / "index.json", keywords)
         print(f"backtest index written: {out_dir / 'index.json'} ({len(dump_bytes(index))}B)")
-        print(f"  pool: {index['poolStats']}")
+        print(f"  universe: {len(universe)} 只 ({universe_bytes}B / gzip {gzip_bytes}B)")
         print(f"  windows: {[(w['key'], w['available'], w['tradingDays']) for w in index['windows']]}")
         print("  mode: --index-only（未生成单标的摘要与明细，未输出任何回测指标）")
         return 0
 
+    top_codes = {item["code"] for item in universe[:POOL_TOP_DETAIL]}
     summaries: dict[str, dict] = {}
     details: dict[str, dict] = {}
-    for item in pool:
+    for item in universe:
         results: dict[str, dict] = {}
         detail_windows: dict[str, dict] = {}
+        has_detail = item["code"] in top_codes
+        series = series_for(item["code"], item["asset"])
         for window in windows:
-            result, detail = simulate_window(bars[item["code"]], dates, window, item["asset"])
-            declared = declared_insufficient.get(item["code"])
-            if declared and not result["available"] and result.get("availableTradingDays") is not None:
-                declared_days = int(declared.get("days") or 0)
-                if declared_days < window["minTradingDays"]:
-                    # 与底座 meta 的对外口径保持一致（如中微公司 12m：235 日）
-                    result["availableTradingDays"] = declared_days
-                    result["tradingDays"] = declared_days
-                    result["reason"] = f"该标的此区间数据不足（可用 {declared_days} 个交易日）"
+            result, detail = simulate_window(series, dates, window, item["asset"], with_detail=has_detail)
             results[window["key"]] = result
             if detail is not None:
                 detail_windows[window["key"]] = detail
-        summary = build_summary(item, dates, results, generated_at)
-        detail_doc = build_detail(item, dates, detail_windows, generated_at)
+        summary = build_summary(item, dates, results, generated_at, has_detail)
+        summary["days"] = item["days"]
         assert_budget(summary, SUMMARY_MAX_BYTES, f"{item['code']} summary")
-        assert_detail_consistent(item["code"], summary, detail_doc)
-        for key, window_detail in detail_doc["windows"].items():
-            size = len(dump_bytes(window_detail))
-            if size > DETAIL_WINDOW_MAX_BYTES:
-                raise SystemExit(f"{item['code']}/{key} 明细超预算：{size}B > {DETAIL_WINDOW_MAX_BYTES}B")
         summaries[item["code"]] = summary
-        details[item["code"]] = detail_doc
+        if has_detail:
+            detail_doc = build_detail(item, dates, detail_windows, generated_at)
+            assert_detail_consistent(item["code"], summary, detail_doc)
+            for key, window_detail in detail_doc["windows"].items():
+                size = len(dump_bytes(window_detail))
+                if size > DETAIL_WINDOW_MAX_BYTES:
+                    raise SystemExit(f"{item['code']}/{key} 明细超预算：{size}B > {DETAIL_WINDOW_MAX_BYTES}B")
+            details[item["code"]] = detail_doc
 
     detail_total = sum(len(dump_bytes(doc)) for doc in details.values())
     if detail_total > DETAIL_TOTAL_MAX_BYTES:
@@ -1050,12 +1059,13 @@ def run_build(data_dir: Path, index_only: bool, base_path: Path = BASE_FILE) -> 
 
     distribution = build_distribution(windows, summaries)
     index = build_index(
-        dates, pool, generated_at, distribution=distribution, windows=windows, methodology=methodology
+        dates, universe, generated_at, distribution=distribution, windows=windows, methodology=methodology
     )
     assert_budget(index, INDEX_MAX_BYTES, "index.json")
     ranking = build_ranking(windows, summaries, generated_at, dates[-1])
 
     # 全部构建成功后再落盘，避免半成品
+    write_json_atomic(out_dir / "universe.json", universe_doc)
     write_json_atomic(out_dir / "index.json", index)
     written_paths = {summary_dir / f"{code}.json" for code in summaries}
     for code, summary in summaries.items():
@@ -1070,14 +1080,13 @@ def run_build(data_dir: Path, index_only: bool, base_path: Path = BASE_FILE) -> 
         if stale not in detail_paths:
             stale.unlink()
     write_json_atomic(internal_dir / "ranking.json", ranking)
-    assert_no_money_bond_leak(out_dir / "index.json", keywords)
 
     print(f"backtest written: {out_dir} ({len(dump_bytes(index))}B index + {len(summaries)} summaries + {len(details)} details)")
+    print(f"  universe: {len(universe)} 只 ({universe_bytes}B / gzip {gzip_bytes}B)")
     print(f"  data: {index['dataStart']} ~ {index['latestDate']} / {index['tradingDays']} 交易日")
     print(f"  windows: {[(w['key'], w['available'], w['start'], w['tradingDays']) for w in index['windows']]}")
-    print(f"  pool: {index['poolStats']}")
     print(f"  detail total: {detail_total}B / ranking: {len(dump_bytes(ranking))}B")
-    for code in ("510300", "600519", "300750"):
+    for code in ("510300", "600519", "300750", "512170"):
         if code not in summaries:
             continue
         row = summaries[code]
