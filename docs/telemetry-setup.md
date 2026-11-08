@@ -64,12 +64,15 @@ CREATE TABLE IF NOT EXISTS events (
   name TEXT,
   term TEXT,
   sid TEXT,
-  country TEXT
+  country TEXT,
+  reason TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_events_day_event ON events(day, event);
 CREATE INDEX IF NOT EXISTS idx_events_code ON events(code);
 CREATE INDEX IF NOT EXISTS idx_events_term ON events(term);
 ```
+
+> 已有库升级：执行 `services/telemetry/migration_add_reason.sql`（`ALTER TABLE events ADD COLUMN reason TEXT;`），历史行 `reason` 为 NULL，不影响既有查询。
 
 3. 点蓝色 **Execute** 按钮
 4. 看到 **`This query successfully executed.`** 即成功

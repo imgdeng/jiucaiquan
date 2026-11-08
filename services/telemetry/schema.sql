@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS events (
   name TEXT,                    -- 标的名称（截断 20 字符）
   term TEXT,                    -- 搜索词（截断 24 字符）
   sid TEXT,                     -- 匿名会话 ID（浏览器内随机串，非身份信息）
-  country TEXT                  -- CF 提供的国家级粗粒度地域（如 CN）
+  country TEXT,                 -- CF 提供的国家级粗粒度地域（如 CN）
+  reason TEXT                   -- 失败原因分类（copy_fail / backtest_copy_fail，如 not_allowed）
 );
 
 CREATE INDEX IF NOT EXISTS idx_events_day_event ON events(day, event);

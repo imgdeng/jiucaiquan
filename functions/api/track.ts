@@ -40,6 +40,8 @@ const EVENTS = new Set([
 ]);
 const ASSETS = new Set(["etf", "stock"]);
 const WINDOWS = new Set(["3m", "2w", "4w", "6m", "9m", "12m"]);
+// 失败原因白名单：未知取值不入库（NULL），但事件本身仍计数，避免整条事件被吞掉
+const REASONS = new Set(["not_allowed", "no_user_gesture", "unknown"]);
 const MAX_BODY_BYTES = 2048;
 
 function cleanText(value: unknown, max: number): string | null {
@@ -76,12 +78,13 @@ export async function onRequestPost({ request, env }: FunctionContext): Promise<
       typeof data.ts === "number" && data.ts > 0 && data.ts < 4.1e12 ? data.ts : Date.now();
     const asset = ASSETS.has(data.asset as string) ? (data.asset as string) : null;
     const win = WINDOWS.has(data.window as string) ? (data.window as string) : null;
+    const reason = REASONS.has(data.reason as string) ? (data.reason as string) : null;
     const countryMatch = (request.headers.get("cf-ipcountry") || "").match(/^[A-Z]{2}$/);
     const country = countryMatch ? countryMatch[0] : null;
 
     await env.DB.prepare(
-      `INSERT INTO events (ts, received_at, day, event, asset, code, name, term, sid, country)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO events (ts, received_at, day, event, asset, code, name, term, sid, country, reason)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
         ts,
@@ -96,6 +99,7 @@ export async function onRequestPost({ request, env }: FunctionContext): Promise<
         cleanText(data.term, 24) ?? (win ? `win:${win}` : null),
         cleanSid(data.sid),
         country,
+        reason,
       )
       .run();
   } catch {
