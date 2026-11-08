@@ -104,12 +104,12 @@ CREATE INDEX IF NOT EXISTS idx_events_term ON events(term);
 3. 出现一行三个输入框，依次填：
    - **Type**：保持 **Text**（明文即可；它只保护匿名统计报表）
    - **Name**：`REPORT_KEY`
-   - **Value**：你自己定的密钥字符串，例如 `jcq-2026-9f3k7d2x`
+   - **Value**：你自己生成的随机密钥（如 `REPLACE_ME_<随机串>`；实际值不要写进任何文档、仓库或提交信息）
      - 建议：字母+数字+短横线，12 位以上，不要用网站密码
      - **务必记下来**，看报表时要拼在 URL 里
 4. 点该行外侧的保存（页面会自动保存或出现 Save 按钮）
 
-保存后 Variables and secrets 表格里应出现：`Text ｜ REPORT_KEY ｜ jcq-2026-...`。
+保存后 Variables and secrets 表格里应出现：`Text ｜ REPORT_KEY ｜ <已隐藏>`。
 
 > 界面如果是 Production / Preview 两列布局，变量加在 **Production** 列即可，Preview 不用管。
 
@@ -242,6 +242,13 @@ Bindings / Variables 的保存提示 *"This change will take effect on the next 
 
 - `REPORT_KEY` 是报表入口的唯一凭证，不要贴在公开场合；泄露后直接在 Variables and secrets 里改值并重新部署即可。
 - 埋点不涉及敏感数据，但 D1 数据库不要绑定到任何其他 Worker。
+
+### 凭证归属、申请与轮换（REPORT_KEY）
+
+- **归属**：`REPORT_KEY` 由数据所有方（项目负责人）持有，值只存放在 Cloudflare Pages 项目 → Settings → Variables and secrets；仓库、文档、日志与提交信息一律不记录值。
+- **申请**：需要读漏斗时，向项目负责人申请临时使用或由负责人代跑，不通过仓库分发。
+- **轮换**：项目负责人登录 Cloudflare → Pages 项目 → Settings → Variables and secrets → 修改 `REPORT_KEY` → Retry deployment；随后用旧 key 验证 403、新 key 验证 200 且 funnel 非空。
+- **已发生的事实**：该 key 曾以明文形式存在于 git 历史与仓库文档中，因此本次轮换是**必要处置**，不是预防措施；文档中的示例值已改为占位符。
 
 ---
 
