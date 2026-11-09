@@ -1,7 +1,9 @@
 {
-  "generatedAt": "2026-11-09T16:38:50+08:00",
+  "generatedAt": "2026-11-10T01:15:12+08:00",
   "lastSuccessAt": "2026-11-09T16:38:50+08:00",
   "stockCount": 5572,
   "etfCount": 1717,
-  "errors": []
+  "errors": [
+    "stock: live fetch failed: 无法解析上游返回的数据：Expecting value: line 1 column 1 (char 0)；附近内容：'<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML'"
+  ]
 }
