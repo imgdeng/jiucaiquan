@@ -18,6 +18,10 @@ on:
 
 jobs:
   build-market-data:
+    # 同一分支串行，避免并发 push 撞车；不取消进行中的运行（否则会打断写数据）
+    concurrency:
+      group: market-data-${{ github.ref }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -50,7 +54,56 @@ jobs:
         run: echo "::warning::Backtest build failed; market data commit will continue."
 
       - name: Commit updated data
+        id: commit
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: update market data snapshots and leaderboard"
           file_pattern: apps/web/public/data/*.json apps/web/public/data/archive/*/*.json apps/web/public/data/backtest/index.json apps/web/public/data/backtest/summary/*.json
+
+      - name: Retry push once on rejection
+        if: steps.commit.outcome == 'failure'
+        run: |
+          set -euo pipefail
+          git add apps/web/public/data/*.json apps/web/public/data/archive/*/*.json \
+                  apps/web/public/data/backtest/index.json apps/web/public/data/backtest/summary/*.json
+          git diff --cached --quiet || git commit -m "chore: update market data snapshots and leaderboard"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Verify data freshness
+        run: |
+          python - <<'PY'
+          import json
+          import sys
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+
+          data = Path("apps/web/public/data")
+          latest = json.loads((data / "leaderboard.json").read_text(encoding="utf-8"))["latestDate"]
+          latest_dir = sorted(p.name for p in (data / "archive").iterdir() if p.is_dir())[-1]
+          today = datetime.now(timezone(timedelta(hours=8))).date().isoformat()
+
+          calendar = None
+          try:
+              import akshare as ak
+
+              calendar = {str(x)[:10] for x in ak.tool_trade_date_hist_sina()["trade_date"]}
+              is_trading_day = today in calendar
+          except Exception as exc:  # 日历不可用时退化为工作日判断，只告警不误判
+              is_trading_day = datetime.now(timezone(timedelta(hours=8))).weekday() < 5
+              print(f"::warning::trade calendar unavailable ({exc}); falling back to weekday check")
+
+          print(f"latestDate={latest} latestArchiveDir={latest_dir} today={today} tradingDay={is_trading_day}")
+
+          failures = []
+          if latest_dir != latest:
+              failures.append(f"leaderboard.latestDate={latest} 与 archive 最新交易日={latest_dir} 不一致")
+          if is_trading_day and latest != today:
+              failures.append(
+                  f"latestDate={latest} 未更新到今日 {today}：个股抓取失败或归档被跳过，页面会静默陈旧"
+              )
+          for failure in failures:
+              print(f"::error::{failure}")
+          sys.exit(1 if failures else 0)
+          PY
+
