@@ -3,16 +3,8 @@ name: Build market data
 on:
   workflow_dispatch:
   schedule:
-    # 中国时间 09:35 → UTC 01:35（开盘后 5 分钟）
-    - cron: "35 1 * * 1-5"
-    # 中国时间 10:35 → UTC 02:35
-    - cron: "35 2 * * 1-5"
-    # 中国时间 11:35 → UTC 03:35
-    - cron: "35 3 * * 1-5"
     # 中国时间 13:35 → UTC 05:35（下午开盘后 5 分钟）
     - cron: "35 5 * * 1-5"
-    # 中国时间 14:35 → UTC 06:35
-    - cron: "35 6 * * 1-5"
     # 中国时间 15:05 → UTC 07:05（收盘后 5 分钟）
     - cron: "5 7 * * 1-5"
 
@@ -37,15 +29,20 @@ jobs:
 
       - name: Build market data
         id: build
+        # 常态 30~60s，历史最长有效一次 457s；10 分钟余量过小，15 分钟为 2 倍上限。
+        # 超时即失败，避免像历史 8 次那样挂到 GitHub 默认 360 分钟上限、占住 concurrency 组。
+        timeout-minutes: 15
         run: python services/market-data/build_market_data.py build-market-data --archive
         env:
           JCQ_SOURCE_DIR: ${{ github.workspace }}
 
       - name: Build stage leaderboard
+        if: steps.build.outputs.skip != 'true'
         run: python services/market-data/build_leaderboard.py
 
       - name: Build backtest static data
         id: build_backtest
+        if: steps.build.outputs.skip != 'true'
         continue-on-error: true
         run: python services/market-data/build_backtest.py
 
@@ -55,6 +52,7 @@ jobs:
 
       - name: Commit updated data
         id: commit
+        if: steps.build.outputs.skip != 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: update market data snapshots and leaderboard"
