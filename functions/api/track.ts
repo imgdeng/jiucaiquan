@@ -98,8 +98,10 @@ export async function onRequestPost({ request, env }: FunctionContext): Promise<
         country,
       )
       .run();
-  } catch {
-    // 埋点为附加能力，任何异常静默处理，不向用户暴露
+  } catch (error) {
+    // 写入失败必须可见：前端 sendBeacon 不读响应，因此这里靠 500 + Pages Functions 日志暴露
+    console.error("[track] 埋点写入失败", error instanceof Error ? error.message : String(error));
+    return new Response(null, { status: 500 });
   }
   return noop;
 }
