@@ -6,8 +6,8 @@ git push -u origin main
 
 ## github
 
-<gang.deng@outlook.com>
-China2us@
+（本文件曾以明文记录 GitHub 账号与密码，已移除。凭证请保存在密码管理器，禁止入库。）
+
 
 ## dns
 
@@ -30,4 +30,3 @@ var _hmt = _hmt || [];
 </script>
 
 ```
-
