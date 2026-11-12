@@ -1,9 +1,7 @@
 {
-  "generatedAt": "2026-11-12T22:00:07+08:00",
-  "lastSuccessAt": "2026-11-11T20:56:48+08:00",
-  "stockCount": 5003,
+  "generatedAt": "2026-11-12T23:50:14+08:00",
+  "lastSuccessAt": "2026-11-12T23:50:14+08:00",
+  "stockCount": 5572,
   "etfCount": 910,
-  "errors": [
-    "stock: live fetch failed: HTTPConnectionPool(host='vip.stock.finance.sina.com.cn', port=80): Read timed out. (read timeout=60)"
-  ]
+  "errors": []
 }
