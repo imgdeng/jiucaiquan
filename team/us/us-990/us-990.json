@@ -83,9 +83,9 @@
       "owner": "工程马（线上初验）",
       "started": "2026-11-15T17:55",
       "done_at": "2026-11-15T18:05",
-      "method": "本地 20 条断言 + 本地真实 HTTP + 线上 curl 5 组固定输入 / 非法参数 / 同参两次逐字一致",
-      "total": 20,
-      "passed": 20,
+      "method": "本地 25 条断言 + 本地真实 HTTP + 线上 curl 5 组固定输入 / Infinity 字符串 / 非正值 / 非法参数 / 同参两次逐字一致",
+      "total": 25,
+      "passed": 25,
       "defects": [
         {
           "level": "P2",
@@ -132,6 +132,13 @@
       "to": "deployed",
       "by": "工程马",
       "note": "线上初验：5 组固定输入符合预期，非法参数 400，同参响应逐字一致；时延波动 P2 已记录，待项目马在稳定网络终验 <1s。"
+    },
+    {
+      "time": "2026-11-15T20:39",
+      "from": "deployed",
+      "to": "deployed",
+      "by": "工程马",
+      "note": "按复核意见修复：expected 溢出字段返回带符号 Infinity 字符串；任一 high/low/close 非正时返回 200 + business_valid=false，并优先于 high<low 校验。本地 25 条断言全绿。"
     }
   ]
 }

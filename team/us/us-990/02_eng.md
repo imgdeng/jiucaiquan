@@ -19,11 +19,11 @@
 | 要点 | 实现 |
 |---|---|
 | 路由 | `functions/api/quote.ts`，仅导出 `onRequestGet`（只读 GET） |
-| 参数 | `high` / `low` / `close` 必填有限数值；缺失、空白、`NaN`、`Infinity`、`high < low` 均返回 `400 { error }`；`open` 可选且不参与计算 |
+| 参数 | `high` / `low` / `close` 必填有限数值；缺失、空白、`NaN`、`Infinity` 返回 `400 { error }`；任一非正值返回 `200 + business_valid=false`；正数且 `high < low` 返回 400；`open` 可选且不参与计算 |
 | 独立判据 | `3 * high - 5 * low > 2 * close` → `business_valid = false`；未 import / 复制前端 `validateOHLC`、`calculateConditionOrder` |
 | 参照值 | `波动区间 = high - low`；`基准价 = (2*close + high + low) / 4`；`低吸价 = 基准价 - 波动区间`；`高抛价 = 基准价 + 波动区间`；保留 4 位小数（页面默认 ETF 档） |
 | 纯计算 | 不读 D1/KV、不 `fetch`、不落库、不写状态；响应无时间戳，同参数两次逐字一致 |
-| 极大值 | `1e308` 在 4 位取整时溢出为 `Infinity`，JSON 序列化为 `null`，不抛 500；`business_valid=false` |
+| 极大值 | `1e308` 在 4 位取整时溢出，`expected` 对应字段返回 `"Infinity"` / `"-Infinity"` 字符串而非 `null`，不抛 500；`business_valid=false` |
 | 对外口径 | 文件头注释写明「为演示特意补的测试脚手架，不是生产链路的一环」 |
 
 ## 三、改动清单
@@ -43,7 +43,7 @@
 |---|---|---|
 | AC-1 `9/0.338/0.342` → 200、`business_valid=false`、低吸价 `-6.1565`、<1s | ✅ 本地通过；线上待复核 | 本地 HTTP 实测 23.2ms，响应见下 |
 | AC-2 同参数两次逐字一致；无 D1 / 外部 fetch | ✅ | `tests/test-quote.ts` 幂等断言通过；代码无 `env`、无 `fetch` |
-| AC-3 5 组固定输入符合预期；非法参数 400 而非 500 | ✅ | `20 passed, 0 failed` |
+| AC-3 5 组固定输入符合预期；非法参数 400 而非 500 | ✅ | `25 passed, 0 failed`（含 Infinity 字符串与 5 组非正值） |
 | AC-4 站点页面行为未变（`9/0.338/0.342` 仍显示 `-6.1565`） | ✅ 静态确认 | `ConditionOrderTool.tsx`、`condition-order.ts` 零改动；`npm run build` 通过 |
 | AC-5 提供实现文件与本地测试输出 | ✅ | 本文件 + `tests/test-quote.ts` |
 | AC-6 项目马线上 `curl` 复核 | ⏳ 部署后待复核 | 见 [03_deliver.md](file:///Users/gdeng/work/jiucaiquan/team/us/us-990/03_deliver.md) |
@@ -64,7 +64,10 @@
 {"business_valid":false,"expected":{"低吸价":-749999999999997.2}}
 
 200 /api/quote?high=1e308&low=1.0&close=1.5
-{"business_valid":false,"expected":{"基准价":null,"波动区间":null,"低吸价":null,"高抛价":null}}
+{"business_valid":false,"expected":{"基准价":"Infinity","波动区间":"Infinity","低吸价":"-Infinity","高抛价":"Infinity"}}
+
+200 /api/quote?high=-1&low=1&close=1
+{"business_valid":false,"reason":"价格必须大于 0","expected":{"基准价":null,"波动区间":null,"低吸价":null,"高抛价":null}}
 
 400 /api/quote?high=abc&low=0.338&close=0.342
 {"error":"invalid number for high: abc"}
@@ -73,9 +76,9 @@
 ## 五、构建与测试命令
 
 ```bash
-# 接口自测（20 条断言）
+# 接口自测（25 条断言）
 node --experimental-strip-types tests/test-quote.ts
-# → 20 passed, 0 failed
+# → 25 passed, 0 failed
 
 # functions 类型检查
 ./node_modules/.bin/tsc --noEmit --strict --moduleResolution bundler \

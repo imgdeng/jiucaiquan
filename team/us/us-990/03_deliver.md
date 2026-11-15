@@ -15,9 +15,9 @@
 |---|---|---|
 | AC-1 `9/0.338/0.342` → 200、`business_valid=false`、低吸价 `-6.1565`、<1s | ⚠️ 功能通过；时延待复核 | 线上返回完全匹配；本机实测最低 322ms，但中位约 1.9s、峰值 9.7s；同域静态资源同样波动 |
 | AC-2 同参数两次逐字一致；无 D1 / 外部 fetch | ✅ 通过 | 线上 10 次响应体 100% 一致；代码无 `env`、无 `fetch`、无写状态 |
-| AC-3 5 组固定输入符合预期；非法参数 400 而非 500 | ✅ 通过 | 5 组线上 200；缺参/非数字/空白/`high<low` 均 400 |
+| AC-3 5 组固定输入符合预期；非法参数 400 而非 500 | ✅ 通过 | 5 组线上 200；缺参/非数字/空白/正数且 `high<low` 均 400；非正值按修复口径返回 200 + `business_valid=false` |
 | AC-4 站点页面行为未变，`9/0.338/0.342` 仍显示 `-6.1565` | ✅ 通过（静态确认） | 仅新增 3 个文件 + 需求卡，未改页面组件与策略文件；`/tools/condition-order/` 线上 200 |
-| AC-5 实现文件与本地测试输出存证 | ✅ 通过 | [02_eng.md](file:///Users/gdeng/work/jiucaiquan/team/us/us-990/02_eng.md)；`20 passed, 0 failed` |
+| AC-5 实现文件与本地测试输出存证 | ✅ 通过 | [02_eng.md](file:///Users/gdeng/work/jiucaiquan/team/us/us-990/02_eng.md)；`25 passed, 0 failed` |
 | AC-6 项目马线上 `curl` 复核 | ⏳ 待项目马 | 工程侧初验已完成，最终判定以项目马复核为准 |
 
 ## 三、线上实测记录（2026-11-15）
@@ -33,7 +33,9 @@ HTTP 200 · application/json; charset=utf-8
 GET ...?high=3&low=1&close=1          → 200 business_valid=false 低吸价=-0.5
 GET ...?high=10&low=9&close=9.5       → 200 business_valid=true  低吸价=8.5
 GET ...?high=999999999999999&low=1.0&close=1.5 → 200 false 低吸价=-749999999999997.2
-GET ...?high=1e308&low=1.0&close=1.5  → 200 false，4 位取整溢出字段 JSON 为 null，未抛 500
+GET ...?high=1e308&low=1.0&close=1.5  → 200 false，溢出字段为 "Infinity" / "-Infinity" 字符串，未抛 500
+GET ...?high=0&low=0&close=0         → 200 business_valid=false，reason="价格必须大于 0"
+GET ...?high=-1&low=1&close=1        → 200 business_valid=false（非正值优先于 high<low 校验）
 
 GET ...?low=0.338&close=0.342         → 400 {"error":"missing required parameter: high"}
 GET ...?high=abc&low=0.338&close=0.342 → 400 {"error":"invalid number for high: abc"}

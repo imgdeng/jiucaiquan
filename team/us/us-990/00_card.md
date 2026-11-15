@@ -132,7 +132,8 @@ GET /api/quote?high=9&low=0.338&close=0.342
 | 项 | 内容 |
 |---|---|
 | 实现 | [functions/api/quote.ts](file:///Users/gdeng/work/jiucaiquan/functions/api/quote.ts)（仅 `onRequestGet`，纯计算） |
-| 测试 | [tests/test-quote.ts](file:///Users/gdeng/work/jiucaiquan/tests/test-quote.ts) → `20 passed, 0 failed` |
+| 2026-11-15 修复 | `expected` 溢出返回 `"Infinity"` / `"-Infinity"` 字符串；任一 `high/low/close <= 0` 返回 `200 + business_valid=false` |
+| 测试 | [tests/test-quote.ts](file:///Users/gdeng/work/jiucaiquan/tests/test-quote.ts) → `25 passed, 0 failed` |
 | 工程记录 | [02_eng.md](file:///Users/gdeng/work/jiucaiquan/team/us/us-990/02_eng.md) |
 | 交付记录 | [03_deliver.md](file:///Users/gdeng/work/jiucaiquan/team/us/us-990/03_deliver.md) |
 | 提交 | `6be797ea8` `[工程马] feat(us-990): 新增只读对照接口 GET /api/quote` |

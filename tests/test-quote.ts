@@ -1,7 +1,7 @@
 // US-990 接口自测：GET /api/quote
 // 运行：node --experimental-strip-types tests/test-quote.ts
 //
-// 覆盖：5 组固定输入、非法参数 400、同参数两次逐字一致、响应时间 < 1s。
+// 覆盖：5 组固定输入、Infinity 字符串、非正值 business_valid=false、非法参数 400、同参幂等、响应时间 < 1s。
 // 直接调用 Pages Function 的 onRequestGet，不依赖 D1 / 外部网络。
 
 import assert from "node:assert/strict";
@@ -73,11 +73,33 @@ await check("999999999999999 低吸价为负数", async () => {
   assert.ok(typeof data.expected["低吸价"] === "number" && data.expected["低吸价"] < 0);
 });
 
-await check("1e308 不抛异常，溢出字段为 null 或数字", async () => {
+await check("1e308 溢出字段返回带符号的 Infinity 字符串", async () => {
   const data = await body(call("high=1e308&low=1.0&close=1.5"));
-  const dip = data.expected["低吸价"];
-  assert.ok(dip === null || typeof dip === "number");
+  assert.deepEqual(data.expected, {
+    基准价: "Infinity",
+    波动区间: "Infinity",
+    低吸价: "-Infinity",
+    高抛价: "Infinity",
+  });
 });
+
+const nonPositiveCases = [
+  "high=0&low=0&close=0",
+  "high=1&low=0&close=1",
+  "high=1&low=1&close=0",
+  "high=-1&low=-2&close=-3",
+  "high=-1&low=1&close=1",
+];
+
+for (const q of nonPositiveCases) {
+  await check(`非正值返回 200 + business_valid=false (${q})`, async () => {
+    const res = call(q);
+    assert.equal(res.status, 200);
+    const data = await body(res);
+    assert.equal(data.business_valid, false);
+    assert.equal(data.reason, "价格必须大于 0");
+  });
+}
 
 await check("open 可选且不影响结果", async () => {
   const withOpen = call("high=9&low=0.338&close=0.342&open=1.23");
