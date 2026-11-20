@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-20T00:24:11+08:00",
+  "generatedAt": "2026-11-20T22:18:55+08:00",
   "lastSuccessAt": "2026-11-13T23:11:12+08:00",
   "stockCount": 5570,
-  "etfCount": 907,
+  "etfCount": 909,
   "errors": [
     "stock: live fetch failed: stock_zh_a_spot 已在 1.20.46 更名为 stock_zh_a_spot_sina，请改用 ak.stock_zh_a_spot_sina；参数与返回的列也可能有调整，用 ak.interface_info(\"stock_zh_a_spot_sina\") 查看。完整对照见 https://akshare.akfamily.xyz/changelog.html#changelog-rename"
   ]
