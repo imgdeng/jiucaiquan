@@ -2,6 +2,12 @@ name: Build market data
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    # 只有管道相关变更才触发，数据快照提交不回环触发
+    paths:
+      - "services/market-data/**"
+      - ".github/workflows/market-data.yml"
   schedule:
     # 中国时间 13:35 → UTC 05:35（下午开盘后 5 分钟）
     - cron: "35 5 * * 1-5"
@@ -26,6 +32,26 @@ jobs:
 
       - name: Install market data dependencies
         run: pip install -r services/market-data/requirements.txt
+
+      - name: Verify pinned akshare version
+        # 依赖门禁：实际安装版本必须与锁文件一致，防止上游接口漂移静默打断管道
+        run: |
+          python - <<'PY'
+          import re, sys
+          from pathlib import Path
+          req = Path("services/market-data/requirements.txt").read_text(encoding="utf-8")
+          m = re.search(r"^akshare==([\d.]+)\s*$", req, re.M)
+          if not m:
+              print("::error::requirements.txt 未锁定 akshare 版本（必须 akshare==x.y.z）")
+              sys.exit(1)
+          pinned = m.group(1)
+          import importlib.metadata as md
+          installed = md.version("akshare")
+          if installed != pinned:
+              print(f"::error::akshare 实际版本 {installed} != 锁定版本 {pinned}；禁止未经验证的升级")
+              sys.exit(1)
+          print(f"akshare pinned ok: {installed}")
+          PY
 
       - name: Build market data
         id: build

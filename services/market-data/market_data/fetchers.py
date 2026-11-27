@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 
 from .schema import QuoteSnapshot, build_quote, now_china_iso
 
@@ -13,21 +13,51 @@ def _akshare():
     return ak
 
 
-def fetch_stock_from_akshare() -> list[QuoteSnapshot]:
-    """Fetch A-share snapshots.
+def _stock_zh_a_spot_em():
+    """东财全市场 spot 接口的惰性加载器；不可用时返回 None（该函数在部分版本未入顶层导出）。"""
+    try:
+        from akshare.stock_a.stock_zh_a_spot import stock_zh_a_spot_em  # type: ignore
+    except Exception:
+        return None
+    return stock_zh_a_spot_em
 
-    This is the extracted minimal equivalent of backtest/aitrade/today.py
-    get_real_time_data_from_akshare(), normalized for the static site.
+
+def fetch_stock_from_akshare() -> list[QuoteSnapshot]:
+    """Fetch A-share snapshots，三级数据源降级（新 sina spot → 东财 spot → 旧 sina spot）。
+
+    背景：akshare 1.20.46 将 `stock_zh_a_spot` 更名为 `stock_zh_a_spot_sina`，
+    导致线上股票行情 2026-11-14 起断裂。为避免上游接口漂移再次打断管道，
+    按源顺序尝试，任一源产出非空快照即返回；`source` 字段如实记录实际使用的接口。
+    全部源失败时抛 RuntimeError（由调用方按既有 fallback 链路处理）。
     """
     ak = _akshare()
-    df = ak.stock_zh_a_spot()
-    snapshot_at = now_china_iso()
-    quotes: list[QuoteSnapshot] = []
-    for row in df.to_dict("records"):
-        quote = build_quote(row, source="akshare.stock_zh_a_spot", snapshot_at=snapshot_at)
-        if quote:
-            quotes.append(quote)
-    return quotes
+    attempts: list[tuple[str, Any]] = []
+    sina_new = getattr(ak, "stock_zh_a_spot_sina", None)
+    if sina_new is not None:
+        attempts.append(("akshare.stock_zh_a_spot_sina", sina_new))
+    em_spot = _stock_zh_a_spot_em()
+    if em_spot is not None:
+        attempts.append(("akshare.stock_zh_a_spot_em", em_spot))
+    legacy = getattr(ak, "stock_zh_a_spot", None)
+    if legacy is not None:
+        attempts.append(("akshare.stock_zh_a_spot", legacy))
+
+    errors: list[str] = []
+    for source, loader in attempts:
+        try:
+            df = loader()
+            snapshot_at = now_china_iso()
+            quotes: list[QuoteSnapshot] = []
+            for row in df.to_dict("records"):
+                quote = build_quote(row, source=source, snapshot_at=snapshot_at)
+                if quote:
+                    quotes.append(quote)
+            if quotes:
+                return quotes
+            errors.append(f"{source}: returned {len(quotes)} rows")
+        except Exception as exc:
+            errors.append(f"{source}: {exc}")
+    raise RuntimeError("all stock sources failed: " + " | ".join(errors))
 
 
 def fetch_etf_from_akshare() -> list[QuoteSnapshot]:
