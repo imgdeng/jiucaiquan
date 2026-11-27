@@ -148,26 +148,34 @@ def load_universe(data_dir: Path) -> tuple[list[dict], list[dict]]:
 
 
 def fetch_hist_daily(ak, kind: str, code: str, start: str, end: str) -> dict[str, dict]:
-    """单代码日 K：返回 {date: {open,close,high,low,pct,amount}}，date 为 YYYY-MM-DD。"""
+    """单代码日 K：返回 {date: {open,close,high,low,pct,amount}}，date 为 YYYY-MM-DD。
+
+    异常一律吞掉并返回空 dict：北交所等个别代码 EM 日 K 不支持，
+    单码失败不应炸掉整批补数（调用方按"无数据"跳过该码）。
+    """
     symbol = strip_prefix(code)
-    if kind == "stock":
-        df = ak.stock_zh_a_hist(symbol=symbol, period="daily", start_date=start, end_date=end, adjust="")
-    else:
-        df = ak.fund_etf_hist_em(symbol=symbol, period="daily", start_date=start, end_date=end, adjust="")
-    out: dict[str, dict] = {}
-    for row in df.to_dict("records"):
-        day = str(row.get("日期"))[:10]
-        if not day:
-            continue
-        out[day] = {
-            "open": row.get("开盘"),
-            "close": row.get("收盘"),
-            "high": row.get("最高"),
-            "low": row.get("最低"),
-            "pct": row.get("涨跌幅"),
-            "amount": row.get("成交额"),
-        }
-    return out
+    try:
+        if kind == "stock":
+            df = ak.stock_zh_a_hist(symbol=symbol, period="daily", start_date=start, end_date=end, adjust="", timeout=20)
+        else:
+            df = ak.fund_etf_hist_em(symbol=symbol, period="daily", start_date=start, end_date=end, adjust="")
+        out: dict[str, dict] = {}
+        for row in df.to_dict("records"):
+            day = str(row.get("日期"))[:10]
+            if not day:
+                continue
+            out[day] = {
+                "open": row.get("开盘"),
+                "close": row.get("收盘"),
+                "high": row.get("最高"),
+                "low": row.get("最低"),
+                "pct": row.get("涨跌幅"),
+                "amount": row.get("成交额"),
+            }
+        return out
+    except Exception as exc:
+        print(f"  {code}: hist fetch failed ({type(exc).__name__}: {str(exc)[:80]})", file=sys.stderr)
+        return {}
 
 
 def build_day_rows(
@@ -246,7 +254,11 @@ def fetch_all(ak, kind: str, universe: list[dict], fetch_start: str, fetch_end: 
     failed: list[str] = []
 
     def one(item: dict):
-        return item["code"], fetch_hist_daily(ak, kind, item["code"], fetch_start, fetch_end)
+        try:
+            return item["code"], fetch_hist_daily(ak, kind, item["code"], fetch_start, fetch_end)
+        except Exception as exc:  # 双保险：线程内任何异常都不炸池
+            print(f"  {item['code']}: thread error ({exc})", file=sys.stderr)
+            return item["code"], {}
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {pool.submit(one, item): item for item in universe}

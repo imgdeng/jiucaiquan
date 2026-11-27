@@ -55,7 +55,9 @@ jobs:
 
       - name: Backfill missing archive days (self-heal)
         id: backfill
-        # 缺口自愈：归档门控或抓取故障留下的缺口，用日 K 接口自动补齐（≤30 天）
+        # 缺口自愈：归档门控或抓取故障留下的缺口，用日 K 接口自动补齐（≤30 天）。
+        # 失败不连坐：补数挂了不影响当日实时快照/日报的正常提交。
+        continue-on-error: true
         run: python services/market-data/backfill_gap.py --auto
 
       - name: Resolve chain skip
@@ -67,7 +69,6 @@ jobs:
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
-
       - name: Build market data
         id: build
         # 常态 30~60s，历史最长有效一次 457s；10 分钟余量过小，15 分钟为 2 倍上限。
