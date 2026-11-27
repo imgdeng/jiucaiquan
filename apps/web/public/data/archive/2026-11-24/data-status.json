@@ -1,0 +1,9 @@
+{
+  "generatedAt": "2026-11-24T15:30:00+08:00",
+  "lastSuccessAt": "2026-11-24T15:30:00+08:00",
+  "stockCount": 5574,
+  "etfCount": 1739,
+  "errors": [
+    "backfilled from stock_zh_a_hist/fund_etf_hist_em (gap repair 2026-11-24)"
+  ]
+}
