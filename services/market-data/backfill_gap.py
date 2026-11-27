@@ -413,9 +413,43 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+def write_run_report(payload: dict) -> None:
+    """把本次运行摘要写盘，随链路提交（ops/data/backfill-last-run.md），供离线诊断。"""
+    report = ROOT / "ops" / "data" / "backfill-last-run.md"
+    report.parent.mkdir(parents=True, exist_ok=True)
+    lines = ["# backfill last run", "", f"- at: {datetime.now(CHINA_TZ).isoformat(timespec='seconds')}", ""]
+    for key, value in payload.items():
+        lines.append(f"- {key}: {value}")
+    tmp = report.with_suffix(".md.tmp")
+    tmp.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    tmp.replace(report)
+
+
+def main() -> int:
     ns = parse_args()
     if not ns.auto and not (ns.start and ns.end):
         print("::error::需要 --auto 或同时提供 --start/--end")
-        sys.exit(1)
-    raise SystemExit(run(ns))
+        return 1
+    report: dict = {"mode": "auto" if ns.auto else f"{ns.start}~{ns.end}"}
+    try:
+        code = run(ns)
+        report["exit"] = code
+        write_run_report(report)
+        return code
+    except SystemExit as exc:  # run() 内部的受控退出也落报告
+        report["exit"] = f"SystemExit({exc.code})"
+        write_run_report(report)
+        raise
+    except Exception as exc:
+        import traceback
+
+        report["crash"] = f"{type(exc).__name__}: {exc}"
+        report["traceback_tail"] = "\n".join(traceback.format_exc().splitlines()[-6:])
+        write_run_report(report)
+        print(f"::error::backfill crashed: {type(exc).__name__}: {str(exc)[:300]}")
+        print(f"::error::traceback tail: {' | '.join(traceback.format_exc().splitlines()[-4:])}"[:900])
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

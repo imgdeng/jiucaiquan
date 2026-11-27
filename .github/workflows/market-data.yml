@@ -98,7 +98,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: update market data snapshots and leaderboard"
-          file_pattern: apps/web/public/data/*.json apps/web/public/data/archive/** apps/web/public/data/backtest/index.json apps/web/public/data/backtest/summary/** apps/web/public/data/backtest/detail/** ops/trade-calendar.json
+          file_pattern: apps/web/public/data/*.json apps/web/public/data/archive/** apps/web/public/data/backtest/index.json apps/web/public/data/backtest/summary/** apps/web/public/data/backtest/detail/** ops/trade-calendar.json ops/data/backfill-last-run.md
 
       - name: Append pipeline daily log
         if: steps.chain.outputs.skip != 'true'
