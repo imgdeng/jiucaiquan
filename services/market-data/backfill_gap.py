@@ -147,35 +147,84 @@ def load_universe(data_dir: Path) -> tuple[list[dict], list[dict]]:
     return stocks, etfs
 
 
-def fetch_hist_daily(ak, kind: str, code: str, start: str, end: str) -> dict[str, dict]:
-    """单代码日 K：返回 {date: {open,close,high,low,pct,amount}}，date 为 YYYY-MM-DD。
-
-    异常一律吞掉并返回空 dict：北交所等个别代码 EM 日 K 不支持，
-    单码失败不应炸掉整批补数（调用方按"无数据"跳过该码）。
-    """
+def _em_daily(ak, kind: str, code: str, start: str, end: str) -> dict[str, dict]:
+    """东财日 K：中文列名，含成交额（元）。"""
     symbol = strip_prefix(code)
+    if kind == "stock":
+        df = ak.stock_zh_a_hist(symbol=symbol, period="daily", start_date=start, end_date=end, adjust="", timeout=20)
+    else:
+        df = ak.fund_etf_hist_em(symbol=symbol, period="daily", start_date=start, end_date=end, adjust="")
+    out: dict[str, dict] = {}
+    for row in df.to_dict("records"):
+        day = str(row.get("日期"))[:10]
+        if not day:
+            continue
+        out[day] = {
+            "open": row.get("开盘"),
+            "close": row.get("收盘"),
+            "high": row.get("最高"),
+            "low": row.get("最低"),
+            "pct": row.get("涨跌幅"),
+            "amount": row.get("成交额"),
+        }
+    return out
+
+
+def _sina_daily(ak, kind: str, code: str, start: str, end: str) -> dict[str, dict]:
+    """新浪日 K 备源：英文列名。
+
+    股票列：open/high/low/close/volume + outstanding_share（流通股数）；
+    成交额 = (volume(股) × close) 近似 —— sina 股票日 K 无成交额列，
+    用收盘价×成交量近似（与快照的"成交额"字段同量级，排序用途不受影响）。
+    ETF 列：open/high/low/close/volume；同样近似。
+    """
+    symbol = code if code[:2] in ("sh", "sz", "bj") else strip_prefix(code)
+    if kind == "stock":
+        if symbol.startswith("bj"):
+            raise ValueError("sina daily 不支持北交所代码")
+        df = ak.stock_zh_a_daily(symbol=symbol, start_date=start, end_date=end, adjust="")
+    else:
+        df = ak.fund_etf_hist_sina(symbol=symbol)
+    out: dict[str, dict] = {}
+    for row in df.to_dict("records"):
+        day = str(row.get("date"))[:10]
+        if not day:
+            continue
+        try:
+            close = float(row.get("close"))
+            volume = float(row.get("volume") or 0)
+        except (TypeError, ValueError):
+            continue
+        amount = volume * close  # 近似成交额
+        out[day] = {
+            "open": row.get("open"),
+            "close": close,
+            "high": row.get("high"),
+            "low": row.get("low"),
+            "pct": row.get("pct") if row.get("pct") is not None else None,  # sina 无涨跌幅列则留空
+            "amount": amount if amount > 0 else None,
+        }
+    return out
+
+
+def fetch_hist_daily(ak, kind: str, code: str, start: str, end: str) -> tuple[dict[str, dict], str]:
+    """双源降级取单代码日 K：EM → sina。返回 ({date: bar}, 实际使用的源)。
+
+    两源都失败时返回 ({}, "none")——单码失败不炸整批。
+    """
     try:
-        if kind == "stock":
-            df = ak.stock_zh_a_hist(symbol=symbol, period="daily", start_date=start, end_date=end, adjust="", timeout=20)
-        else:
-            df = ak.fund_etf_hist_em(symbol=symbol, period="daily", start_date=start, end_date=end, adjust="")
-        out: dict[str, dict] = {}
-        for row in df.to_dict("records"):
-            day = str(row.get("日期"))[:10]
-            if not day:
-                continue
-            out[day] = {
-                "open": row.get("开盘"),
-                "close": row.get("收盘"),
-                "high": row.get("最高"),
-                "low": row.get("最低"),
-                "pct": row.get("涨跌幅"),
-                "amount": row.get("成交额"),
-            }
-        return out
+        bars = _em_daily(ak, kind, code, start, end)
+        if bars:
+            return bars, "em"
     except Exception as exc:
-        print(f"  {code}: hist fetch failed ({type(exc).__name__}: {str(exc)[:80]})", file=sys.stderr)
-        return {}
+        print(f"  {code}: EM daily failed ({type(exc).__name__}: {str(exc)[:80]})", file=sys.stderr)
+    try:
+        bars = _sina_daily(ak, kind, code, start, end)
+        if bars:
+            return bars, "sina"
+    except Exception as exc:
+        print(f"  {code}: sina daily failed ({type(exc).__name__}: {str(exc)[:80]})", file=sys.stderr)
+    return {}, "none"
 
 
 def build_day_rows(
@@ -248,31 +297,34 @@ def write_status(day_dir: Path, day: str, stock_rows: list[dict], etf_rows: list
     )
 
 
-def fetch_all(ak, kind: str, universe: list[dict], fetch_start: str, fetch_end: str, workers: int) -> tuple[dict[str, dict[str, dict]], list[str]]:
+def fetch_all(ak, kind: str, universe: list[dict], fetch_start: str, fetch_end: str, workers: int) -> tuple[dict[str, dict[str, dict]], list[str], dict[str, int]]:
     name = "stock_zh_a_hist" if kind == "stock" else "fund_etf_hist_em"
     hist_by_code: dict[str, dict[str, dict]] = {}
     failed: list[str] = []
+    source_stats: dict[str, int] = {"em": 0, "sina": 0, "none": 0}
 
     def one(item: dict):
         try:
             return item["code"], fetch_hist_daily(ak, kind, item["code"], fetch_start, fetch_end)
         except Exception as exc:  # 双保险：线程内任何异常都不炸池
             print(f"  {item['code']}: thread error ({exc})", file=sys.stderr)
-            return item["code"], {}
+            return item["code"], ({}, "none")
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {pool.submit(one, item): item for item in universe}
         done = 0
         for fut in as_completed(futures):
-            code, data = fut.result()
-            if data:
-                hist_by_code[code] = data
+            code, result = fut.result()
+            bars, src = result if isinstance(result, tuple) else (result, "none")
+            if bars:
+                hist_by_code[code] = bars
             else:
                 failed.append(code)
+            source_stats[src] = source_stats.get(src, 0) + 1
             done += 1
             if done % 500 == 0:
-                print(f"  {name}: {done}/{len(universe)} codes, {len(failed)} empty")
-    return hist_by_code, failed
+                print(f"  {name}: {done}/{len(universe)} codes, {len(failed)} empty, sources={dict(source_stats)}")
+    return hist_by_code, failed, source_stats
 
 
 def run(args: argparse.Namespace) -> int:
@@ -300,11 +352,20 @@ def run(args: argparse.Namespace) -> int:
     fetch_end = pending[-1].replace("-", "")
 
     print(f"fetching stock daily bars {fetch_start}~{fetch_end} ...")
-    stock_hist, stock_failed = fetch_all(ak, "stock", stocks, fetch_start, fetch_end, args.workers)
-    print(f"stock bars: {len(stock_hist)} codes ok, {len(stock_failed)} empty")
+    stock_hist, stock_failed, stock_src = fetch_all(ak, "stock", stocks, fetch_start, fetch_end, args.workers)
+    print(f"stock bars: {len(stock_hist)} codes ok, {len(stock_failed)} empty, sources={stock_src}")
     print(f"fetching etf daily bars {fetch_start}~{fetch_end} ...")
-    etf_hist, etf_failed = fetch_all(ak, "etf", etfs, fetch_start, fetch_end, args.workers)
-    print(f"etf bars: {len(etf_hist)} codes ok, {len(etf_failed)} empty")
+    etf_hist, etf_failed, etf_src = fetch_all(ak, "etf", etfs, fetch_start, fetch_end, args.workers)
+    print(f"etf bars: {len(etf_hist)} codes ok, {len(etf_failed)} empty, sources={etf_src}")
+
+    # 源级熔断：主力源（EM）几乎全失败说明接口不可用（IP 频控/接口变更），
+    # 此时 sina 备源成功率也必然可疑，继续跑只会产出大面积残缺归档，中止。
+    ok_total = len(stock_hist) + len(etf_hist)
+    if ok_total < (len(stocks) + len(etfs)) * 0.5:
+        msg = f"backfill aborted: only {ok_total}/{len(stocks)+len(etfs)} codes returned bars (EM={stock_src.get('em',0)}/{len(stocks)}, sina={stock_src.get('sina',0)}); likely IP rate-limit or source outage"
+        print(f"::error::{msg}")
+        print(msg, file=sys.stderr)
+        sys.exit(2)  # 区别于数据错误的 exit 1：源级故障，靠 watchdog/手动重试
 
     # 昨收初值：锚点日（缺口前一交易日）的当日收盘价
     def prev_closes(hist: dict[str, dict[str, dict]]) -> dict[str, float]:
