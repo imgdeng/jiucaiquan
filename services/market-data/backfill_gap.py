@@ -42,6 +42,18 @@ STOCK_SOURCE = "akshare.stock_zh_a_hist_backfill"
 ETF_SOURCE = "akshare.fund_etf_hist_em_backfill"
 
 
+def emit_has_gap(pending: list[str]) -> None:
+    """告诉 workflow 本次补了缺口：即使后续构建步骤判 skip（快照无变化），
+    排行榜/回测重建与提交也必须执行，否则补出的归档不会入库。"""
+    if not pending:
+        return
+    output_path = os.environ.get("GITHUB_OUTPUT")
+    if output_path:
+        with open(output_path, "a", encoding="utf-8") as handle:
+            handle.write("has_gap=true\n")
+    print(f"::notice::backfill {len(pending)} days; downstream rebuild+commit required")
+
+
 def strip_prefix(code: str) -> str:
     return code[2:] if code[:2] in ("sh", "sz", "bj") else code
 
@@ -261,6 +273,7 @@ def run(args: argparse.Namespace) -> int:
     save_trading_calendar(calendar, cal_source)
 
     pending, anchor = resolve_gap(args, calendar, archive_dir)
+    emit_has_gap(pending)
     skipped_hint = "auto" if args.auto else f"{args.start}~{args.end}"
     if not pending:
         print(f"nothing to backfill ({skipped_hint})")

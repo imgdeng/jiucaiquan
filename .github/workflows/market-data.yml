@@ -58,6 +58,16 @@ jobs:
         # 缺口自愈：归档门控或抓取故障留下的缺口，用日 K 接口自动补齐（≤30 天）
         run: python services/market-data/backfill_gap.py --auto
 
+      - name: Resolve chain skip
+        id: chain
+        run: |
+          # 构建步骤判定 skip（快照无变化）但补数补了缺口 → 仍需重建+提交
+          if [ "${{ steps.build.outputs.skip }}" = "true" ] && [ "${{ steps.backfill.outputs.has_gap }}" != "true" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build market data
         id: build
         # 常态 30~60s，历史最长有效一次 457s；10 分钟余量过小，15 分钟为 2 倍上限。
@@ -68,12 +78,12 @@ jobs:
           JCQ_SOURCE_DIR: ${{ github.workspace }}
 
       - name: Build stage leaderboard
-        if: steps.build.outputs.skip != 'true'
+        if: steps.chain.outputs.skip != 'true'
         run: python services/market-data/build_leaderboard.py
 
       - name: Build backtest static data
         id: build_backtest
-        if: steps.build.outputs.skip != 'true'
+        if: steps.chain.outputs.skip != 'true'
         continue-on-error: true
         run: python services/market-data/build_backtest.py
 
@@ -83,14 +93,14 @@ jobs:
 
       - name: Commit updated data
         id: commit
-        if: steps.build.outputs.skip != 'true'
+        if: steps.chain.outputs.skip != 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: update market data snapshots and leaderboard"
           file_pattern: apps/web/public/data/*.json apps/web/public/data/archive/** apps/web/public/data/backtest/index.json apps/web/public/data/backtest/summary/** apps/web/public/data/backtest/detail/** ops/trade-calendar.json
 
       - name: Append pipeline daily log
-        if: steps.build.outputs.skip != 'true'
+        if: steps.chain.outputs.skip != 'true'
         # 日报：一行/日，供周报"管道健康"固定章节消费
         run: |
           python - <<'PY'
@@ -114,7 +124,7 @@ jobs:
           PY
 
       - name: Commit daily log
-        if: steps.build.outputs.skip != 'true'
+        if: steps.chain.outputs.skip != 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: pipeline daily log"
