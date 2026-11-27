@@ -53,6 +53,11 @@ jobs:
           print(f"akshare pinned ok: {installed}")
           PY
 
+      - name: Backfill missing archive days (self-heal)
+        id: backfill
+        # 缺口自愈：归档门控或抓取故障留下的缺口，用日 K 接口自动补齐（≤30 天）
+        run: python services/market-data/backfill_gap.py --auto
+
       - name: Build market data
         id: build
         # 常态 30~60s，历史最长有效一次 457s；10 分钟余量过小，15 分钟为 2 倍上限。
@@ -82,14 +87,46 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: update market data snapshots and leaderboard"
-          file_pattern: apps/web/public/data/*.json apps/web/public/data/archive/*/*.json apps/web/public/data/backtest/index.json apps/web/public/data/backtest/summary/*.json
+          file_pattern: apps/web/public/data/*.json apps/web/public/data/archive/** apps/web/public/data/backtest/index.json apps/web/public/data/backtest/summary/** apps/web/public/data/backtest/detail/** ops/trade-calendar.json
+
+      - name: Append pipeline daily log
+        if: steps.build.outputs.skip != 'true'
+        # 日报：一行/日，供周报"管道健康"固定章节消费
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+          CHINA = timezone(timedelta(hours=8))
+          status = json.loads(Path("apps/web/public/data/data-status.json").read_text(encoding="utf-8"))
+          log = Path("ops/data/pipeline-daily-log.md")
+          log.parent.mkdir(parents=True, exist_ok=True)
+          today = datetime.now(CHINA).date().isoformat()
+          src = "OK" if not status.get("errors") else "DEGRADED"
+          line = f"| {today} | stock {status.get('stockCount')} | etf {status.get('etfCount')} | {src} | {('; '.join(status.get('errors') or []))[:120] or '-'} |\n"
+          text = log.read_text(encoding="utf-8") if log.exists() else "| 日期 | 股票数 | ETF数 | 状态 | 错误摘要 |\n|------|--------|-------|------|----------|\n"
+          if f"| {today} |" not in text:
+              text += line
+              log.write_text(text, encoding="utf-8")
+              print(f"daily log appended: {line.strip()}")
+          else:
+              print("daily log already has today")
+          PY
+
+      - name: Commit daily log
+        if: steps.build.outputs.skip != 'true'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: pipeline daily log"
+          file_pattern: ops/data/pipeline-daily-log.md
 
       - name: Retry push once on rejection
         if: steps.commit.outcome == 'failure'
         run: |
           set -euo pipefail
-          git add apps/web/public/data/*.json apps/web/public/data/archive/*/*.json \
-                  apps/web/public/data/backtest/index.json apps/web/public/data/backtest/summary/*.json
+          git add apps/web/public/data/*.json apps/web/public/data/archive/** \
+                  apps/web/public/data/backtest/index.json apps/web/public/data/backtest/summary/** \
+                  apps/web/public/data/backtest/detail/** ops/trade-calendar.json ops/data/pipeline-daily-log.md
           git diff --cached --quiet || git commit -m "chore: update market data snapshots and leaderboard"
           git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"

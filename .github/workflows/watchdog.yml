@@ -1,0 +1,79 @@
+name: Pipeline watchdog
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 中国时间 20:00 → UTC 12:00，每日一次（收盘数据落库后独立巡检）
+    - cron: "0 12 * * *"
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check data freshness against standalone calendar
+        run: |
+          python - <<'PY'
+          import json, sys, urllib.request
+          from datetime import datetime, date, timedelta, timezone
+          from pathlib import Path
+
+          CHINA = timezone(timedelta(hours=8))
+          today = datetime.now(CHINA).date()
+
+          # 独立交易日历：由每日构建写入 ops/trade-calendar.json（与抓取链路解耦，抓取断了它也活着）
+          cal_path = Path("ops/trade-calendar.json")
+          calendar = set()
+          if cal_path.exists():
+              calendar = {d for d in json.loads(cal_path.read_text())["tradingDays"]}
+          cal_years = {d[:4] for d in calendar}
+          def is_trading(d: date) -> bool:
+              iso = d.isoformat()
+              if iso[:4] in cal_years:      # 日历覆盖该年份 → 精确判定
+                  return iso in calendar
+              return d.weekday() < 5        # 未覆盖年份退化为工作日判断
+
+          def get(url: str):
+              req = urllib.request.Request(url, headers={"User-Agent": "jcq-watchdog"})
+              return json.loads(urllib.request.urlopen(req, timeout=30).read().decode())
+
+          status = get(f"https://jiucaiquan.com/data/data-status.json?t={today}")
+          board = get(f"https://jiucaiquan.com/data/leaderboard.json?t={today}")
+
+          failures = []
+          # 1) lastSuccessAt：距今 ≤2 个交易日（周末+节假日不误报）
+          last_ok = str(status.get("lastSuccessAt", ""))[:10]
+          try:
+              last_date = date.fromisoformat(last_ok)
+          except ValueError:
+              failures.append(f"data-status.lastSuccessAt 无法解析: {status.get('lastSuccessAt')}")
+              last_date = None
+          if last_date:
+              limit = today - timedelta(days=2)
+              if last_date < limit and (is_trading(today) or is_trading(today - timedelta(days=1))):
+                  failures.append(f"lastSuccessAt={last_ok} 距今超过 2 个交易日（today={today}）")
+
+          # 2) latestDate 与 archive 最新目录一致性
+          latest = board.get("latestDate", "")
+          latest_dir = str(status.get("lastSuccessAt", ""))[:10]
+          if latest and last_ok and latest > last_ok[:10]:
+              failures.append(f"leaderboard.latestDate={latest} 晚于 lastSuccessAt={last_ok}，数据链不一致")
+
+          # 3) errors 字段非空 = 抓取源异常（含降级源失败）
+          errors = status.get("errors") or []
+          if errors:
+              failures.append(f"data-status.errors 非空: {errors}")
+
+          # 4) 数量下限：全市场被删库级别事故兜底
+          if int(status.get("stockCount") or 0) < 4000:
+              failures.append(f"stockCount={status.get('stockCount')} 异常偏低（基线约 5500）")
+          if int(status.get("etfCount") or 0) < 1000:
+              failures.append(f"etfCount={status.get('etfCount')} 异常偏低（基线约 1700）")
+
+          if failures:
+              for f_ in failures:
+                  print(f"::error::{f_}")
+              sys.exit(1)
+          print(f"freshness OK: lastSuccessAt={last_ok} latestDate={latest} stock={status.get('stockCount')} etf={status.get('etfCount')}")
+          PY

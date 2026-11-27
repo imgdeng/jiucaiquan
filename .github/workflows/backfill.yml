@@ -1,0 +1,52 @@
+name: Backfill market data gap
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "缺口起始日 YYYY-MM-DD（含）；留空则走 --auto 自检"
+        required: false
+      end:
+        description: "缺口结束日 YYYY-MM-DD（含）；与 start 成对提供"
+        required: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: market-data-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # 补数重跑排行榜/回测需要完整历史 archive 与底座
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install market data dependencies
+        run: pip install -r services/market-data/requirements.txt
+
+      - name: Backfill snapshots
+        run: |
+          if [ -n "${{ github.event.inputs.start }}" ] && [ -n "${{ github.event.inputs.end }}" ]; then
+            python services/market-data/backfill_gap.py --start "${{ github.event.inputs.start }}" --end "${{ github.event.inputs.end }}"
+          else
+            python services/market-data/backfill_gap.py --auto
+          fi
+
+      - name: Rebuild leaderboard
+        run: python services/market-data/build_leaderboard.py
+
+      - name: Build backtest static data
+        run: python services/market-data/build_backtest.py
+
+      - name: Commit backfilled data
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: backfill market data archive"
+          file_pattern: apps/web/public/data/archive/** apps/web/public/data/leaderboard.json apps/web/public/data/backtest/** ops/trade-calendar.json
