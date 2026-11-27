@@ -80,28 +80,37 @@ def save_trading_calendar(days: set[str], source: str) -> None:
 
 
 def resolve_gap(args: argparse.Namespace, calendar: set[str], archive_dir: Path) -> tuple[list[str], str]:
-    """计算待补交易日列表与昨收锚点日（缺口前一交易日）。"""
+    """计算待补交易日列表与昨收锚点日（第一个缺口日的前一交易日）。
+
+    --auto 扫描 [最早归档日, 昨日] 全窗口（不只看尾部），找出日历上是交易日
+    但无归档目录的所有缺口——中段缺口（如 11-13 → [缺] → 11-27）同样能检出。
+    """
     if args.auto:
         existing = sorted(p.name for p in archive_dir.iterdir() if p.is_dir()) if archive_dir.exists() else []
         if not existing:
             print("::error::--auto 需要至少一个已归档交易日作锚点")
             sys.exit(1)
-        anchor = existing[-1]
-        anchor_date = date.fromisoformat(anchor)
+        first = date.fromisoformat(existing[0])
         today = datetime.now(CHINA_TZ).date()
-        candidates: list[str] = []
-        d = anchor_date + timedelta(days=1)
+        window: list[str] = []
+        d = first + timedelta(days=1)
         while d < today:  # 今日快照由构建步骤负责，补数只补昨日以前
-            candidates.append(d.isoformat())
+            window.append(d.isoformat())
             d += timedelta(days=1)
         if calendar:
-            missing = [x for x in candidates if x in calendar and not (archive_dir / x / "stock-latest.json").exists()]
+            missing = [x for x in window if x in calendar and not (archive_dir / x / "stock-latest.json").exists()]
         else:
             print("::warning::无日历，按工作日判断缺口", file=sys.stderr)
-            missing = [x for x in candidates if date.fromisoformat(x).weekday() < 5 and not (archive_dir / x / "stock-latest.json").exists()]
+            missing = [x for x in window if date.fromisoformat(x).weekday() < 5 and not (archive_dir / x / "stock-latest.json").exists()]
         if len(missing) > MAX_AUTO_GAP_DAYS:
             print(f"::error::缺口 {len(missing)} 天超过上限 {MAX_AUTO_GAP_DAYS}，请人工核查后用手动模式分批补")
             sys.exit(1)
+        if not missing:
+            return [], existing[-1]
+        # 锚点 = 第一个缺口日之前最近的已归档交易日
+        first_gap = date.fromisoformat(missing[0])
+        before = [x for x in existing if date.fromisoformat(x) < first_gap]
+        anchor = before[-1] if before else existing[0]
         return missing, anchor
     start = date.fromisoformat(args.start)
     end = date.fromisoformat(args.end)
@@ -113,7 +122,11 @@ def resolve_gap(args: argparse.Namespace, calendar: set[str], archive_dir: Path)
             days.append(iso)
         d += timedelta(days=1)
     pending = [x for x in days if not (archive_dir / x / "stock-latest.json").exists()]
-    return pending, (start - timedelta(days=1)).isoformat()
+    # 锚点 = 起始日前最近的已归档交易日（手动模式无法感知归档，按日历回退）
+    anchor_d = start - timedelta(days=1)
+    while calendar and anchor_d.isoformat() not in calendar and anchor_d > start - timedelta(days=15):
+        anchor_d -= timedelta(days=1)
+    return pending, anchor_d.isoformat()
 
 
 def load_universe(data_dir: Path) -> tuple[list[dict], list[dict]]:
